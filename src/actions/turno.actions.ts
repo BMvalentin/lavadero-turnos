@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { toZonedTime, fromZonedTime, formatInTimeZone } from "date-fns-tz";
 import { addMinutes } from "date-fns";
 import { serializeData } from "@/lib/utils";
+import { enviarCorreoCreacionTurno, enviarCorreoModificacionTurno, enviarCorreoCancelacionTurno } from "@/lib/mail";
 
 const TIMEZONE = process.env.TIMEZONE || "America/Argentina/Buenos_Aires";
 
@@ -132,6 +133,31 @@ export async function createTurno(
                 updatedAt: ahoraUTC, 
             }
         });
+
+        // Notificación por correo
+        try {
+            const turnoParaCorreo = await prisma.turno.findUnique({
+                where: { id: nuevoTurno.id },
+                include: {
+                    user: true,
+                    vehiculo_servicio: {
+                        include: { vehiculo: true, servicio: true }
+                    }
+                }
+            });
+
+            if (turnoParaCorreo && turnoParaCorreo.user.email) {
+                await enviarCorreoCreacionTurno(turnoParaCorreo.user.email, {
+                    cliente: turnoParaCorreo.user.name || turnoParaCorreo.user.email,
+                    fecha: formatInTimeZone(turnoParaCorreo.horarioReservado, TIMEZONE, "dd/MM/yyyy HH:mm"),
+                    vehiculo: turnoParaCorreo.vehiculo_servicio.vehiculo.nombre || "Vehículo",
+                    servicio: turnoParaCorreo.vehiculo_servicio.servicio.nombre || "Servicio",
+                    precio: Number(turnoParaCorreo.precioCongelado)
+                });
+            }
+        } catch (mailError) {
+            console.error("Error al enviar correo de creación:", mailError);
+        }
 
         revalidatePath("/turno");
         return { success: true, data: { id: nuevoTurno.id } };
@@ -296,6 +322,21 @@ export async function actualizarTurno(
             }
         });
 
+        // Notificación por correo
+        try {
+            if (turnoActualizado.user.email) {
+                await enviarCorreoModificacionTurno(turnoActualizado.user.email, {
+                    cliente: turnoActualizado.user.name || turnoActualizado.user.email,
+                    fecha: formatInTimeZone(turnoActualizado.horarioReservado, TIMEZONE, "dd/MM/yyyy HH:mm"),
+                    vehiculo: turnoActualizado.vehiculo_servicio.vehiculo.nombre || "Vehículo",
+                    servicio: turnoActualizado.vehiculo_servicio.servicio.nombre || "Servicio",
+                    precio: Number(turnoActualizado.precioCongelado)
+                });
+            }
+        } catch (mailError) {
+            console.error("Error al enviar correo de modificación:", mailError);
+        }
+
         revalidatePath("/turno");
 
         // Devolvemos datos limpios para el front
@@ -392,7 +433,11 @@ export async function deleteTurno(
 
         // Verificamos si existe antes de intentar actualizar
         const existe = await prisma.turno.findUnique({
-            where: { id }
+            where: { id },
+            include: {
+                user: true,
+                vehiculo_servicio: { include: { vehiculo: true, servicio: true } }
+            }
         });
 
         if (!existe) {
@@ -410,6 +455,21 @@ export async function deleteTurno(
                 updatedAt: new Date() // Satisfacemos el campo obligatorio
             }
         });
+
+        // Notificación por correo
+        try {
+            if (existe.user.email) {
+                await enviarCorreoCancelacionTurno(existe.user.email, {
+                    cliente: existe.user.name || existe.user.email,
+                    fecha: formatInTimeZone(existe.horarioReservado, TIMEZONE, "dd/MM/yyyy HH:mm"),
+                    vehiculo: existe.vehiculo_servicio.vehiculo.nombre || "Vehículo",
+                    servicio: existe.vehiculo_servicio.servicio.nombre || "Servicio",
+                    precio: Number(existe.precioCongelado)
+                });
+            }
+        } catch (mailError) {
+            console.error("Error al enviar correo de cancelación:", mailError);
+        }
 
         // Revalidamos la ruta para que la lista de turnos se actualice al instante
         revalidatePath("/turno");

@@ -3,7 +3,10 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
+import { enviarCorreoCancelacionTurno } from "@/lib/mail";
+import { formatInTimeZone } from "date-fns-tz";
 
+const TIMEZONE = process.env.TIMEZONE || "America/Argentina/Buenos_Aires";
 
 // Definimos el estado de retorno para saber si falló
 export type State = {
@@ -80,10 +83,30 @@ export async function getUserTurnos(userId: string) {
 
 export async function cancelTurno(turnoId: string) {
   try {
-    await prisma.turno.update({
+    const turnoActualizado = await prisma.turno.update({
       where: { id: turnoId },
       data: { estado: 0 }, // 0 = cancelado 1= pendiente 2= completado
+      include: {
+        user: true,
+        vehiculo_servicio: { include: { vehiculo: true, servicio: true } }
+      }
     });
+
+    // Notificación por correo
+    try {
+        if (turnoActualizado.user.email) {
+            await enviarCorreoCancelacionTurno(turnoActualizado.user.email, {
+                cliente: turnoActualizado.user.name || turnoActualizado.user.email,
+                fecha: formatInTimeZone(turnoActualizado.horarioReservado, TIMEZONE, "dd/MM/yyyy HH:mm"),
+                vehiculo: turnoActualizado.vehiculo_servicio.vehiculo.nombre || "Vehículo",
+                servicio: turnoActualizado.vehiculo_servicio.servicio.nombre || "Servicio",
+                precio: Number(turnoActualizado.precioCongelado)
+            });
+        }
+    } catch (mailError) {
+        console.error("Error al enviar correo de cancelación:", mailError);
+    }
+
     revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {

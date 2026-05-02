@@ -4,7 +4,6 @@ import { Hero } from "@/components/Hero";
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { AboutSection } from "@/components/AboutSection";
 import { LocationSection } from "@/components/LocationSection";
-import { Footer } from "@/components/Footer";
 import { useBooking } from "@/app/context/Booking";
 
 export default function HomeClient() {

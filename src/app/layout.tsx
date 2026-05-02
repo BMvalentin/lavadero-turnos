@@ -5,6 +5,7 @@ import LayoutComponent from "@/components/LayoutComponent";
 import { auth } from "@/auth";
 // 1. Importa el cargador
 import NextTopLoader from 'nextjs-toploader';
+import AppGate from "@/components/AppGate";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,7 +41,9 @@ export default async function RootLayout({
         />
         
         <LayoutComponent session={session}>
+          <AppGate>
             {children}
+          </AppGate>
         </LayoutComponent>
       </body>
     </html>

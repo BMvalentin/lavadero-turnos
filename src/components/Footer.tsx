@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 
-export function Footer() {
+export function Footer( { openPrivacy, openTerms }: { openPrivacy: () => void; openTerms: () => void } ) {
   return (
     <footer className="py-8 border-t border-celeste/20 mx-auto  bg-white">
       <div className="container mx-auto">
@@ -18,12 +18,20 @@ export function Footer() {
           </p>
 
           <div className="flex gap-6">
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={(e) => {
+              e.preventDefault();
+              openTerms();
+            }}>
+
               Términos
-            </a>
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            </button>
+            <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={(e) => {
+              e.preventDefault();
+              openPrivacy();
+            }}>
+
               Privacidad
-            </a>
+            </button>
           </div>
         </div>
       </div>

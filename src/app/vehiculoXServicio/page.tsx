@@ -18,10 +18,6 @@ export default async function VehiculoXServicioPage() {
                         Configura los precios y duración de cada servicio por cada tipo de vehículo
                     </p>
                 </div>
-                <div className="flex flex-row gap-5">
-                    <Link href="/servicio"><Button variant={"celeste"}>Ir a Servicios</Button></Link>
-                    <Link href="/vehiculo"><Button variant={"celeste"}>Ir a Vehiculos</Button></Link>
-                </div>
             </div>
 
             <div className="mb-8">

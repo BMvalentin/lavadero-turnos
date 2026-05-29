@@ -13,8 +13,10 @@ interface HeaderProps {
 
 export function Header({ session }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
   const closeMenu = () => setIsMobileMenuOpen(false);
+  const role = session?.user?.role;
+  const image = session?.user?.image || "/images/avatar-default.svg";
+  const name = session?.user?.name || "Usuario";
 
   return (
     <>
@@ -35,7 +37,7 @@ export function Header({ session }: HeaderProps) {
 
           {/* NAVEGACIÓN DESKTOP */}
           <nav className="hidden md:flex items-center gap-4 lg:gap-8">
-            {session?.user.role === "ADMIN" ? (
+            {role === "ADMIN" ? (
               <>
                 <Link href="/servicio" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   <Button variant="celeste" size="sm">Servicios</Button>
@@ -76,8 +78,8 @@ export function Header({ session }: HeaderProps) {
             {session ? (
               <>
                 <Link className="flex flex-row items-center gap-2" href="/dashboard">
-                  <Image src={session?.user.image || "/images/avatar-default.svg"} alt="" className="rounded-full" width={'32'} height={'32'}/>
-                  <Button variant="link" size="sm" className="px-0">{session?.user.name}</Button>
+                  <Image src={image} alt="" className="rounded-full" width={'32'} height={'32'}/>
+                  <Button variant="link" size="sm" className="px-0">{name}</Button>
                 </Link>
                 <form action={handleSignOut}>
                   <Button variant="rojo" size="sm" type="submit">Salir</Button>
@@ -134,7 +136,7 @@ export function Header({ session }: HeaderProps) {
 
               {/* Links de Navegación Mobile */}
               <nav className="flex flex-col gap-4 overflow-y-auto mb-6 flex-1">
-                {session?.user.role === "ADMIN" ? (
+                {role === "ADMIN" ? (
                   <>
                     <Link href="/servicio" onClick={closeMenu}><Button variant="celeste" className="w-full justify-start">Servicios</Button></Link>
                     <Link href="/vehiculo" onClick={closeMenu}><Button variant="celeste" className="w-full justify-start">Vehículos</Button></Link>
@@ -157,8 +159,8 @@ export function Header({ session }: HeaderProps) {
                 {session ? (
                   <>
                     <Link href="/dashboard" onClick={closeMenu} className="flex items-center gap-3">
-                      <Image src={session?.user.image || "/images/avatar-default.svg"} alt="" className="rounded-full" width={'40'} height={'40'}/>
-                      <span className="font-medium text-sm truncate">{session?.user.name}</span>
+                      <Image src={image} alt="" className="rounded-full" width={'40'} height={'40'}/>
+                      <span className="font-medium text-sm truncate">{name}</span>
                     </Link>
                     <form action={handleSignOut} onSubmit={closeMenu}>
                       <Button variant="rojo" className="w-full" type="submit">Salir</Button>

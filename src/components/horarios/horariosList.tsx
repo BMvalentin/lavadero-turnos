@@ -63,7 +63,8 @@ export function HorariosList({
   };
 
   return (
-    <div className="space-y-4">
+    /* Cambio: Forzamos bg-white en el contenedor principal del componente */
+    <div className="space-y-4 bg-white p-4 rounded-xl">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Clock className="h-5 w-5 text-cyan-600" />
@@ -87,7 +88,8 @@ export function HorariosList({
       </div>
 
       {margenes.length === 0 ? (
-        <div className="border-2 border-dashed border-cyan-200 rounded-lg p-8 text-center">
+        /* Cambio realizado acá: Añadido bg-white explícito para limpiar la tarjeta punteada de la imagen */
+        <div className="border-2 border-dashed border-cyan-200 rounded-lg p-8 text-center bg-white">
           <Clock className="h-12 w-12 text-cyan-300 mx-auto mb-3" />
           <p className="text-cyan-600 font-medium mb-1">
             No hay horarios definidos
@@ -103,7 +105,7 @@ export function HorariosList({
               key={margen.id}
               className={`flex items-center justify-between p-4 border-2 rounded-lg transition-all ${
                 margen.estado
-                  ? "border-cyan-300 bg-gradient-to-r from-cyan-50/50 to-white"
+                  ? "border-cyan-300 bg-white"
                   : "border-gray-300 bg-gray-50/50 opacity-60"
               }`}
             >
@@ -166,7 +168,7 @@ export function HorariosList({
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] border-4 border-cyan-400 shadow-2xl bg-[#FFF8DC]">
+        <DialogContent className="sm:max-w-[500px] border-4 border-cyan-400 shadow-2xl bg-white">
           <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-cyan-500 via-cyan-400 to-cyan-300 rounded-t-2xl" />
 
           <DialogHeader className="space-y-4 pt-2">

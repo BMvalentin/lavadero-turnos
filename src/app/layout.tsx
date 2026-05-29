@@ -18,8 +18,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "🚗 Lavadero Reservas",
+  title: "Chapa Detail - Lavadero Santa Clara",
   description: "Lavadero de autos - Reserva tu turno en línea de manera fácil y rápida. Santa clara, Buenos Aires.",
+  icons: {
+    icon: "/images/logopng.png",
+    shortcut: "/images/logopng.png",
+    apple: "/images/logopng.png",
+  },
 };
 
 export default async function RootLayout({

@@ -21,10 +21,6 @@ export default async function ServiciosPage() {
                         Administra los servicios disponibles para tus vehículos
                     </p>
                 </div>
-                <div className="flex flex-row gap-5">
-                    <Link href="/vehiculo"><Button variant={"celeste"}>Ir a Vehiculos</Button></Link>
-                    <Link href="/vehiculoXServicio"><Button variant={"celeste"}>Asignar servicios</Button></Link>
-                </div>
             </div>
 
             {/* Formulario de creación */}

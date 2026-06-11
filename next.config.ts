@@ -12,11 +12,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**', // Permite cualquier hostname HTTPS
+        hostname: '/**', // Permite cualquier hostname HTTPS
       },
       {
         protocol: 'http',
-        hostname: '**', // Permite cualquier hostname HTTP
+        hostname: '/**', // Permite cualquier hostname HTTP
       },
     ],
     unoptimized: true, // Desactiva optimización para simplificar

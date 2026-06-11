@@ -31,8 +31,8 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   return (
-    <html lang="es">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased w-dvw`}>
+    <html lang="es" className="h-full">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-full`}>
         <NextTopLoader color="#6fa9da" showSpinner={true} height={3} zIndex={9999} />
         <LayoutComponent session={session}>
           <AppGate>

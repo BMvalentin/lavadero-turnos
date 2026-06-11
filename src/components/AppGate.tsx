@@ -77,32 +77,15 @@ export default function AppGate({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {/* 🔒 COOKIES BLOQUEAN TODO */}
-      {!acceptedCookies && (
-        <CookieModal onAccept={handleAcceptCookies} />
-      )}
+      {!acceptedCookies && <CookieModal onAccept={handleAcceptCookies} />}
+      <PrivacyModal isOpen={privacyOpen} onClose={handleClosePrivacy} />
+      <TermsModal isOpen={termsOpen} onClose={handleAcceptTerms} />
 
-      {/* 🔐 PRIVACY */}
-      <PrivacyModal
-        isOpen={privacyOpen}
-        onClose={handleClosePrivacy}
-      />
-
-      {/* 📜 TERMS */}
-      <TermsModal
-        isOpen={termsOpen}
-        onClose={handleAcceptTerms}
-      />
-
-      {/* 🚫 APP BLOQUEADA HASTA ACEPTAR TODO */}
-      {isFullyAccepted && children}
-
-      {/* Footer solo si todo está aceptado */}
       {isFullyAccepted && (
-        <Footer
-          openPrivacy={() => setPrivacyOpen(true)}
-          openTerms={() => setTermsOpen(true)}
-        />
+        <div className="flex flex-col flex-1">
+          <main className="flex-1">{children}</main>
+          <Footer openPrivacy={() => setPrivacyOpen(true)} openTerms={() => setTermsOpen(true)} />
+        </div>
       )}
     </>
   );

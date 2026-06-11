@@ -42,7 +42,7 @@ export default function CreateServicioForm() {
         <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">Crear Nuevo Servicio</h2>
             
-            <form ref={formRef} action={formAction} encType="multipart/form-data" className="space-y-4">
+            <form ref={formRef} action={formAction} className="space-y-4">
                 <div>
                     <label htmlFor="nombre" className="block text-sm font-medium mb-1">
                         Nombre del Servicio *

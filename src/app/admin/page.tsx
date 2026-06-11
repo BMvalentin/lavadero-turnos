@@ -27,7 +27,7 @@ export default async function AdminPage({
         <BotonesLimpieza />
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between gap-5 mb-5">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-5 mb-5">
         <Buscador />
         <Link href="/diaLaboral">
           <Button variant={"celeste"}>Ir a gestion de dia laboral</Button>
@@ -44,10 +44,10 @@ export default async function AdminPage({
 async function TurnosContainer({ params }: { params: any }) {
   const turnos = await obtenerTurnos(params);
   return (
-    <ListaTurnos 
-      turnos={turnos} 
-      orderBy={params.orderBy} 
-      orderDir={params.orderDir} 
+    <ListaTurnos
+      turnos={turnos}
+      orderBy={params.orderBy}
+      orderDir={params.orderDir}
     />
   );
 }

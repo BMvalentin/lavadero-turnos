@@ -55,7 +55,7 @@ export default function EditServicioModal({ servicio, onClose }: EditServicioMod
                         </Button>
                     </div>
 
-                    <form ref={formRef} action={formAction} className="space-y-4">
+                    <form ref={formRef} action={formAction} encType="multipart/form-data" className="space-y-4">
                         <input type="hidden" name="id" value={servicio.id} />
 
                         <div>
@@ -74,17 +74,23 @@ export default function EditServicioModal({ servicio, onClose }: EditServicioMod
                         </div>
 
                         <div>
+                            <label className="block text-sm font-medium mb-1">Imagen actual</label>
+                            {servicio.srcImage ? (
+                                <img src={servicio.srcImage} alt={servicio.nombre || "Servicio"} className="h-24 w-auto mb-2 rounded" />
+                            ) : (
+                                <p className="text-gray-500 text-sm mb-2">Sin imagen</p>
+                            )}
                             <label htmlFor="srcImage" className="block text-sm font-medium mb-1">
-                                URL de Imagen
+                                Nueva imagen (opcional)
                             </label>
                             <input
-                                type="text"
+                                type="file"
                                 id="srcImage"
                                 name="srcImage"
-                                defaultValue={servicio.srcImage || ""}
+                                accept="image/*"
                                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="/images/foto.jpg o https://..."
                             />
+                            <p className="text-xs text-gray-500 mt-1">Dejar vacío para conservar la imagen actual</p>
                         </div>
 
                         <div className="flex items-center">
@@ -127,7 +133,7 @@ export default function EditServicioModal({ servicio, onClose }: EditServicioMod
 
 function SubmitButton() {
     const { pending } = useFormStatus();
-    
+
     return (
         <Button
             type="submit"

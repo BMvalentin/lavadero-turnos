@@ -27,8 +27,8 @@ export default function CreateServicioForm() {
     return (
         <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">Crear Nuevo Servicio</h2>
-            
-            <form ref={formRef} action={formAction} className="space-y-4">
+
+            <form ref={formRef} action={formAction} encType="multipart/form-data" className="space-y-4">
                 <div>
                     <label htmlFor="nombre" className="block text-sm font-medium mb-1">
                         Nombre del Servicio *
@@ -45,14 +45,14 @@ export default function CreateServicioForm() {
 
                 <div>
                     <label htmlFor="srcImage" className="block text-sm font-medium mb-1">
-                        URL de Imagen
+                        Imagen del Servicio
                     </label>
                     <input
-                        type="text"
+                        type="file"
                         id="srcImage"
                         name="srcImage"
+                        accept="image/*"
                         className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="https://ejemplo.com/imagen.jpg"
                     />
                 </div>
 
@@ -84,7 +84,7 @@ export default function CreateServicioForm() {
 
 function SubmitButton() {
     const { pending } = useFormStatus();
-    
+
     return (
         <Button
             type="submit"

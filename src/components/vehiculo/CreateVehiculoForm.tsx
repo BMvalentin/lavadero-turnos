@@ -30,7 +30,7 @@ export default function CreateVehiculoForm() {
         <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">Crear Nuevo Tipo de Vehículo</h2>
             
-            <form ref={formRef} action={formAction} className="space-y-4">
+            <form ref={formRef} action={formAction} encType="multipart/form-data" className="space-y-4">
                 <div>
                     <label htmlFor="nombre" className="block text-sm font-medium mb-1">
                         Nombre del Vehículo *
@@ -47,14 +47,14 @@ export default function CreateVehiculoForm() {
 
                 <div>
                     <label htmlFor="srcImage" className="block text-sm font-medium mb-1">
-                        URL de Imagen
+                        Imagen del Vehículo
                     </label>
                     <input
-                        type="text"
+                        type="file"
                         id="srcImage"
                         name="srcImage"
+                        accept="image/*"
                         className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="https://ejemplo.com/imagen.jpg o /images/foto.jpg"
                     />
                     <p className="text-xs text-gray-500 mt-1">
                         Deja vacío si no tienes imagen

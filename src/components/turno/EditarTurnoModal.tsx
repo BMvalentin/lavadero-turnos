@@ -6,6 +6,7 @@ import { useFormStatus } from "react-dom";
 import { useEffect, useRef } from "react";
 import SeleccionadorHorario from "./SeleccionadorHorario";
 import { Button } from "../ui/button";
+import { useToast } from "@/hooks/useToast";
 
 const initialState = {
     success: false,
@@ -44,14 +45,15 @@ type EditTurnoModalProps = {
 export default function EditTurnoModal({ session, turno, onClose }: EditTurnoModalProps) {
     const [state, formAction] = useActionState(actualizarTurno, initialState);
     const formRef = useRef<HTMLFormElement>(null);
+    const { addToast } = useToast();
 
     useEffect(() => {
         if (state.success) {
-            alert("✅ Turno actualizado exitosamente!");
+            addToast("✅ Turno actualizado exitosamente", "success");
             onClose();
         }
         if (state.error) {
-            alert(`❌ Error: ${state.error}`);
+            addToast(`❌ Error: ${state.error}`, "error");
         }
     }, [state.success, state.error, onClose]);
 

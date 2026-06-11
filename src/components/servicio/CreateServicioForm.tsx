@@ -1,10 +1,8 @@
-// components/servicio/CreateServicioForm.tsx
 "use client";
 
 import { createServicio } from "@/actions/servicio-actions";
-import { useActionState } from "react";
+import { useActionState, useState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
-import { useEffect, useRef } from "react";
 import { Button } from "../ui/button";
 
 const initialState = {
@@ -16,19 +14,35 @@ const initialState = {
 export default function CreateServicioForm() {
     const [state, formAction] = useActionState(createServicio, initialState);
     const formRef = useRef<HTMLFormElement>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (state.success) {
             formRef.current?.reset();
-            alert("Servicio creado exitosamente");
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+                setPreviewUrl(null);
+            }
         }
-    }, [state.success]);
+    }, [state.success]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(URL.createObjectURL(file));
+        } else {
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
+        }
+    };
 
     return (
         <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">Crear Nuevo Servicio</h2>
             
-            <form ref={formRef} action={formAction} className="space-y-4">
+            <form ref={formRef} action={formAction} encType="multipart/form-data" className="space-y-4">
                 <div>
                     <label htmlFor="nombre" className="block text-sm font-medium mb-1">
                         Nombre del Servicio *
@@ -45,15 +59,22 @@ export default function CreateServicioForm() {
 
                 <div>
                     <label htmlFor="srcImage" className="block text-sm font-medium mb-1">
-                        URL de Imagen
+                        Imagen del servicio
                     </label>
                     <input
-                        type="text"
+                        type="file"
                         id="srcImage"
                         name="srcImage"
+                        accept="image/*"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
                         className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="https://ejemplo.com/imagen.jpg"
                     />
+                    {previewUrl && (
+                        <div className="mt-2">
+                            <img src={previewUrl} alt="Vista previa" className="h-32 w-auto rounded border" />
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex items-center">

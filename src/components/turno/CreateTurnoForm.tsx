@@ -6,6 +6,7 @@ import { useFormStatus } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import SeleccionadorHorario from "./SeleccionadorHorario";
 import { Button } from "../ui/button";
+import { useToast } from "@/hooks/useToast";
 
 // Tipos definidos localmente para claridad
 type VehiculoServicioData = {
@@ -51,6 +52,7 @@ export default function CreateTurnoForm({ session }: { session: any }) {
     const [usuarios, setUsuarios] = useState<UsuarioData[]>([]);
     const [loadingData, setLoadingData] = useState(true);
     const [selectedConfigId, setSelectedConfigId] = useState<string>("");
+    const { addToast } = useToast();
 
     // --- ESTADOS PARA LA BÚSQUEDA DE CLIENTES (ADMIN) ---
     const [searchTerm, setSearchTerm] = useState("");
@@ -94,7 +96,7 @@ export default function CreateTurnoForm({ session }: { session: any }) {
 
     useEffect(() => {
         if (state.success) {
-            alert("✅ Turno creado correctamente");
+            addToast("✅ Turno creado correctamente", "success");
             formRef.current?.reset();
             setSelectedConfigId("");
             if (session.user.role === "ADMIN") {

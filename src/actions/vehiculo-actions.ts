@@ -4,7 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { serializeData } from "@/lib/utils";
 import { uploadImage, deleteImage } from "@/lib/cloudinary";
-import type { ActionState } from "./types";
+
+export type ActionState = {
+  error?: string;
+  success?: boolean;
+  data?: any;
+};
 
 export const getVehiculos = async (): Promise<ActionState> => {
   try {

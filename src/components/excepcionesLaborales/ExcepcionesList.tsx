@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { deleteExcepcion, softDeleteExcepcion } from "@/actions/excepcionesLaborales.actions";
 import ExcepcionForm from "./ExcepcionesForm";
 import { Button } from "../ui/button";
+import { useToast } from "@/hooks/useToast";
 
 type Excepcion = {
   id: string;
@@ -23,6 +24,7 @@ export default function ExcepcionesList({ excepciones }: ExcepcionesListProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const { addToast } = useToast();
 
   const handleDelete = async (id: string) => {
     if (!confirm("¿Estás seguro de que deseas eliminar esta excepción?")) return;
@@ -33,7 +35,9 @@ export default function ExcepcionesList({ excepciones }: ExcepcionesListProps) {
       setDeletingId(null);
 
       if (!result.success) {
-        alert(result.error);
+        addToast("❌ Error al eliminar la excepción", "error");
+      } else {
+        addToast("✅ Excepción eliminada exitosamente", "success");
       }
     });
   };
@@ -47,7 +51,9 @@ export default function ExcepcionesList({ excepciones }: ExcepcionesListProps) {
       setDeletingId(null);
 
       if (!result.success) {
-        alert(result.error);
+        addToast("❌ Error al desactivar la excepción", "error");
+      } else {
+        addToast("✅ Excepción desactivada exitosamente", "success");
       }
     });
   };

@@ -6,6 +6,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../ui/button";
+import { useToast } from "@/hooks/useToast";
 
 const initialState = {
     success: false,
@@ -52,6 +53,7 @@ export default function EditVehiculoXServicioModal({ item, onClose }: EditVehicu
     const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
     const [servicios, setServicios] = useState<Servicio[]>([]);
     const [loading, setLoading] = useState(true);
+    const { addToast } = useToast();
 
     useEffect(() => {
         async function cargarDatos() {
@@ -72,11 +74,11 @@ export default function EditVehiculoXServicioModal({ item, onClose }: EditVehicu
 
     useEffect(() => {
         if (state.success) {
-            alert("✅ Configuración actualizada exitosamente!");
+            addToast("✅ Configuración actualizada exitosamente", "success");
             onClose();
         }
         if (state.error) {
-            alert(`❌ Error: ${state.error}`);
+            addToast(`❌ ${state.error}`, "error");
         }
     }, [state.success, state.error, onClose]);
 

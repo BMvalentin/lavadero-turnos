@@ -1,11 +1,12 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import LayoutComponent from "@/components/LayoutComponent";
 import { auth } from "@/auth";
-// 1. Importa el cargador
-import NextTopLoader from 'nextjs-toploader';
+import type { Metadata } from "next";
 import AppGate from "@/components/AppGate";
+import NextTopLoader from 'nextjs-toploader';
+import { Geist, Geist_Mono } from "next/font/google";
+import LayoutComponent from "@/components/LayoutComponent";
+import ToastProvider from "@/components/toast/ToastProvider";
+import ConfirmProvider from "@/components/confirm/ConfirmContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,27 +28,19 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
-
   return (
     <html lang="es">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased w-dvw`}>
-        {/* 2. Implementa el loader aquí */}
-        <NextTopLoader 
-          color="#6fa9da" // Tu color celeste característico
-          showSpinner={true}
-          height={3}
-          zIndex={9999}
-        />
-        
+        <NextTopLoader color="#6fa9da" showSpinner={true} height={3} zIndex={9999} />
         <LayoutComponent session={session}>
           <AppGate>
-            {children}
+            <ToastProvider>
+              <ConfirmProvider>
+                {children}
+              </ConfirmProvider>
+            </ToastProvider>
           </AppGate>
         </LayoutComponent>
       </body>

@@ -1,9 +1,8 @@
 "use client";
 
 import { createVehiculo } from "@/actions/vehiculo-actions";
-import { useActionState } from "react";
+import { useActionState, useState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
-import { useEffect, useRef } from "react";
 import { Button } from "../ui/button";
 
 const initialState = {
@@ -15,16 +14,31 @@ const initialState = {
 export default function CreateVehiculoForm() {
     const [state, formAction] = useActionState(createVehiculo, initialState);
     const formRef = useRef<HTMLFormElement>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Limpiar preview cuando se resetea el formulario (tras éxito)
     useEffect(() => {
         if (state.success) {
             formRef.current?.reset();
-            alert("✅ Vehículo creado exitosamente!");
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+                setPreviewUrl(null);
+            }
         }
-        if (state.error) {
-            alert(`❌ Error: ${state.error}`);
+    }, [state.success]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Manejar cambio de archivo
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(URL.createObjectURL(file));
+        } else {
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
         }
-    }, [state.success, state.error]);
+    };
 
     return (
         <div className="bg-white rounded-lg shadow p-6">
@@ -47,18 +61,22 @@ export default function CreateVehiculoForm() {
 
                 <div>
                     <label htmlFor="srcImage" className="block text-sm font-medium mb-1">
-                        Imagen del Vehículo
+                        Imagen del vehículo
                     </label>
                     <input
                         type="file"
                         id="srcImage"
                         name="srcImage"
                         accept="image/*"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
                         className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                        Deja vacío si no tienes imagen
-                    </p>
+                    {previewUrl && (
+                        <div className="mt-2">
+                            <img src={previewUrl} alt="Vista previa" className="h-32 w-auto rounded border" />
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex items-center">

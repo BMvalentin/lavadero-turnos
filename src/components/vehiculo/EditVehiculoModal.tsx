@@ -1,9 +1,8 @@
 "use client";
 
 import { actualizarVehiculo } from "@/actions/vehiculo-actions";
-import { useActionState } from "react";
+import { useActionState, useState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
-import { useEffect, useRef } from "react";
 import { Button } from "../ui/button";
 
 const initialState = {
@@ -27,16 +26,34 @@ type EditVehiculoModalProps = {
 export default function EditVehiculoModal({ vehiculo, onClose }: EditVehiculoModalProps) {
     const [state, formAction] = useActionState(actualizarVehiculo, initialState);
     const formRef = useRef<HTMLFormElement>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Cuando se cierra el modal, limpiar preview
+    const handleClose = () => {
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
+        }
+        onClose();
+    };
 
     useEffect(() => {
         if (state.success) {
-            alert("✅ Vehículo actualizado exitosamente!");
-            onClose();
+            handleClose();
         }
-        if (state.error) {
-            alert(`❌ Error: ${state.error}`);
+    }, [state.success]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(URL.createObjectURL(file));
+        } else {
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
         }
-    }, [state.success, state.error, onClose]);
+    };
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
@@ -45,7 +62,7 @@ export default function EditVehiculoModal({ vehiculo, onClose }: EditVehiculoMod
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-xl font-semibold">Editar Vehículo</h2>
                         <Button
-                            onClick={onClose}
+                            onClick={handleClose}
                             className="text-gray-400 hover:text-gray-600"
                         >
                             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -87,9 +104,17 @@ export default function EditVehiculoModal({ vehiculo, onClose }: EditVehiculoMod
                                 id="srcImage"
                                 name="srcImage"
                                 accept="image/*"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
                                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
-                            <p className="text-xs text-gray-500 mt-1">Dejar vacío para conservar la imagen actual</p>
+                            {previewUrl ? (
+                                <div className="mt-2">
+                                    <img src={previewUrl} alt="Vista previa nueva" className="h-32 w-auto rounded border" />
+                                </div>
+                            ) : vehiculo.srcImage ? (
+                                <p className="text-xs text-gray-500 mt-1">Si no selecciona archivo, se conserva la actual.</p>
+                            ) : null}
                         </div>
 
                         <div className="flex items-center">
@@ -116,7 +141,7 @@ export default function EditVehiculoModal({ vehiculo, onClose }: EditVehiculoMod
                             <Button
                                 type="button"
                                 variant={"blanco"}
-                                onClick={onClose}
+                                onClick={handleClose}
                                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                             >
                                 Cancelar
@@ -132,12 +157,12 @@ export default function EditVehiculoModal({ vehiculo, onClose }: EditVehiculoMod
 
 function SubmitButton() {
     const { pending } = useFormStatus();
-
+    
     return (
         <Button
             type="submit"
             disabled={pending}
-            variant={pending ? "blanco" : "celeste"}
+            variant={pending? "blanco":"celeste"}
             className="flex-1 disabled:cursor-not-allowed"
         >
             {pending ? "Guardando..." : "Guardar Cambios"}

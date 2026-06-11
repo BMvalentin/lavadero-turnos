@@ -1,9 +1,8 @@
 "use client";
 
 import { actualizarServicio } from "@/actions/servicio-actions";
-import { useActionState } from "react";
+import { useActionState, useState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
-import { useEffect, useRef } from "react";
 import { Button } from "../ui/button";
 
 const initialState = {
@@ -27,16 +26,33 @@ type EditServicioModalProps = {
 export default function EditServicioModal({ servicio, onClose }: EditServicioModalProps) {
     const [state, formAction] = useActionState(actualizarServicio, initialState);
     const formRef = useRef<HTMLFormElement>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleClose = () => {
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
+        }
+        onClose();
+    };
 
     useEffect(() => {
         if (state.success) {
-            alert("✅ Servicio actualizado exitosamente!");
-            onClose();
+            handleClose();
         }
-        if (state.error) {
-            alert(`❌ Error: ${state.error}`);
+    }, [state.success]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(URL.createObjectURL(file));
+        } else {
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
         }
-    }, [state.success, state.error, onClose]);
+    };
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
@@ -45,7 +61,7 @@ export default function EditServicioModal({ servicio, onClose }: EditServicioMod
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-xl font-semibold">Editar Servicio</h2>
                         <Button
-                            onClick={onClose}
+                            onClick={handleClose}
                             variant="ghost"
                             className="text-gray-400 hover:text-gray-600"
                         >
@@ -88,9 +104,17 @@ export default function EditServicioModal({ servicio, onClose }: EditServicioMod
                                 id="srcImage"
                                 name="srcImage"
                                 accept="image/*"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
                                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
-                            <p className="text-xs text-gray-500 mt-1">Dejar vacío para conservar la imagen actual</p>
+                            {previewUrl ? (
+                                <div className="mt-2">
+                                    <img src={previewUrl} alt="Vista previa nueva" className="h-32 w-auto rounded border" />
+                                </div>
+                            ) : servicio.srcImage ? (
+                                <p className="text-xs text-gray-500 mt-1">Si no selecciona archivo, se conserva la actual.</p>
+                            ) : null}
                         </div>
 
                         <div className="flex items-center">
@@ -117,7 +141,7 @@ export default function EditServicioModal({ servicio, onClose }: EditServicioMod
                             <Button
                                 type="button"
                                 variant={"blanco"}
-                                onClick={onClose}
+                                onClick={handleClose}
                                 className="flex-1"
                             >
                                 Cancelar
@@ -133,7 +157,7 @@ export default function EditServicioModal({ servicio, onClose }: EditServicioMod
 
 function SubmitButton() {
     const { pending } = useFormStatus();
-
+    
     return (
         <Button
             type="submit"

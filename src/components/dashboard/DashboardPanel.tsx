@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  User, Mail, Phone, Calendar, Clock, Car, 
-  Settings, AlertCircle, CheckCircle2, XCircle, ChevronRight,
+import {
+  User, Mail, Phone, Calendar, Clock, Car,
+  Settings, AlertCircle, CheckCircle2, XCircle,
   Lock, Eye, EyeOff, Users, Search, Trash2, Shield, ShieldOff
 } from "lucide-react";
 import { Button } from "../ui/button";
@@ -43,26 +43,26 @@ export default function DashboardPanel({ user }: { user: any }) {
           </h1>
           <p className="text-gray-500 mt-1">Gestiona tu perfil y tus reservas.</p>
         </div>
-        
+
         <div className="flex p-1 bg-white rounded-xl border border-gray-200 shadow-sm w-fit flex-wrap gap-1">
-          <TabButton 
-            isActive={activeTab === 'info'} 
-            onClick={() => setActiveTab('info')} 
-            label="Mi Perfil" 
+          <TabButton
+            isActive={activeTab === 'info'}
+            onClick={() => setActiveTab('info')}
+            label="Mi Perfil"
             icon={<User className="w-4 h-4" />}
           />
-          <TabButton 
-            isActive={activeTab === 'turnos'} 
-            onClick={() => setActiveTab('turnos')} 
-            label="Mis Turnos" 
+          <TabButton
+            isActive={activeTab === 'turnos'}
+            onClick={() => setActiveTab('turnos')}
+            label="Mis Turnos"
             icon={<Calendar className="w-4 h-4" />}
           />
           {/* Pestaña condicional solo para ADMIN */}
           {user.role === 'ADMIN' && (
-            <TabButton 
-              isActive={activeTab === 'usuarios'} 
-              onClick={() => setActiveTab('usuarios')} 
-              label="Admin. Usuarios" 
+            <TabButton
+              isActive={activeTab === 'usuarios'}
+              onClick={() => setActiveTab('usuarios')}
+              label="Admin. Usuarios"
               icon={<Users className="w-4 h-4" />}
             />
           )}
@@ -76,7 +76,7 @@ export default function DashboardPanel({ user }: { user: any }) {
             <PasswordForm user={user} />
           </motion.div>
         )}
-        
+
         {activeTab === 'turnos' && (
           <motion.div key="turnos" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
             <TurnosList turnos={turnos} loading={loadingTurnos} />
@@ -102,9 +102,8 @@ function TabButton({ isActive, onClick, label, icon }: any) {
   return (
     <button
       onClick={onClick}
-      className={`relative flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all duration-200 z-10 rounded-full text-shadow-md ${
-        isActive ? "text-blue-950 bg-amber-200 " : "text-gray-500 hover:text-blue-900 hover:bg-gray-100"
-      }`}
+      className={`relative flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all duration-200 z-10 rounded-full text-shadow-md ${isActive ? "text-blue-950 bg-amber-200 " : "text-gray-500 hover:text-blue-900 hover:bg-gray-100"
+        }`}
     >
       {isActive && (
         <motion.div
@@ -132,11 +131,11 @@ export function ProfileForm({ user }: { user: any }) {
   const [phoneNumber, setPhoneNumber] = useState("");
 
   // Lógica de inicialización del teléfono al cargar el componente
-  useState(() => {
+  useEffect(() => {
     if (user.telefono) {
       // Quitamos todos los espacios para analizarlo más fácil
       const strippedPhone = user.telefono.replace(/\s+/g, '');
-      
+
       // Si empieza con +549 (o +54 9)
       if (strippedPhone.startsWith("+549")) {
         setCountryCode("+54 9 ");
@@ -144,13 +143,13 @@ export function ProfileForm({ user }: { user: any }) {
       } else {
         // Si tiene otro código no reconocido, lo mandamos a "no seleccionado"
         setCountryCode("");
-        setPhoneNumber(strippedPhone); 
+        setPhoneNumber(strippedPhone);
       }
     } else {
       // Si no tiene teléfono, default Argentina
       setCountryCode("+54 9 ");
     }
-  });
+  }, []);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Reemplaza cualquier cosa que NO sea letra o espacio por vacío
@@ -170,11 +169,11 @@ export function ProfileForm({ user }: { user: any }) {
 
     startTransition(async () => {
       const res = await updateProfile(user.id, formData);
-      
+
       if (res.success) {
         setStatus('success');
         setMsg(res.message || "Perfil actualizado correctamente.");
-        if (res.user){
+        if (res.user) {
           await update({
             name: res.user.name,
             telefono: res.user.telefono
@@ -197,7 +196,7 @@ export function ProfileForm({ user }: { user: any }) {
       </div>
 
       <form onSubmit={handleFormSubmit} className="p-6 md:p-8 grid gap-6 md:grid-cols-2">
-        
+
         {/* Email (Solo lectura) */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -214,7 +213,7 @@ export function ProfileForm({ user }: { user: any }) {
             <User className="w-4 h-4 text-gray-400" /> Nombre Completo
           </label>
           <input
-            name="name" 
+            name="name"
             value={name}
             onChange={handleNameChange}
             type="text"
@@ -229,7 +228,7 @@ export function ProfileForm({ user }: { user: any }) {
           <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
             <Phone className="w-4 h-4 text-gray-400" /> Teléfono (WhatsApp)
           </label>
-          
+
           <div className="flex gap-2">
             <select
               value={countryCode}
@@ -242,20 +241,20 @@ export function ProfileForm({ user }: { user: any }) {
               <option value="+598 ">🇺🇾 +598</option>
               {/* Agrega más prefijos según lo necesites */}
             </select>
-            
+
             <input
-              type="text" 
+              type="text"
               value={phoneNumber}
               onChange={handlePhoneChange}
               className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
               placeholder="11 2345 6789"
             />
-            
+
             {/* Input oculto que envía el dato completo al backend */}
-            <input 
-              type="hidden" 
-              name="telefono" 
-              value={`${countryCode}${phoneNumber}`.trim()} 
+            <input
+              type="hidden"
+              name="telefono"
+              value={`${countryCode}${phoneNumber}`.trim()}
             />
           </div>
         </div>
@@ -273,9 +272,9 @@ export function ProfileForm({ user }: { user: any }) {
             </span>
           )}
 
-          <Button 
-            disabled={isPending} 
-            type="submit" 
+          <Button
+            disabled={isPending}
+            type="submit"
             variant="celeste"
             className="min-w-[120px]"
           >
@@ -341,7 +340,7 @@ function TurnosList({ turnos, loading }: { turnos: TurnoWithDetails[], loading: 
           </div>
           <div className="space-y-3">
             {turnosHoy.map((turno) => (
-              <TurnoCard key={turno.id} turno={turno}/>
+              <TurnoCard key={turno.id} turno={turno} />
             ))}
           </div>
         </div>
@@ -398,26 +397,24 @@ function TurnoCard({ turno }: { turno: TurnoWithDetails }) {
   };
 
   return (
-    <motion.div 
+    <motion.div
       layout
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`relative overflow-hidden rounded-xl border transition-all ${
-        turnoEstado === 0
-          ? "bg-gray-50 border-gray-100 opacity-75" 
-          : turnoEstado === 1 ? "bg-white border-gray-200 shadow-sm hover:shadow-md hover:border-primary/30"
+      className={`relative overflow-hidden rounded-xl border transition-all ${turnoEstado === 0
+        ? "bg-gray-50 border-gray-100 opacity-75"
+        : turnoEstado === 1 ? "bg-white border-gray-200 shadow-sm hover:shadow-md hover:border-primary/30"
           : "bg-green-50 border-green-200 shadow-sm hover:shadow-md hover:border-green-300"
-      }`}
+        }`}
     >
       <div className="flex flex-col md:flex-row">
         {/* Columna Fecha */}
-        <div className={`p-6 flex flex-col justify-center items-center min-w-[140px] border-b md:border-b-0 md:border-r ${
-          turnoEstado === 0 ? "bg-gray-100 text-gray-400" : turnoEstado === 2 ? "bg-green-50/50 text-green-700" : "bg-white text-gray-900"
-        }`}>
+        <div className={`p-6 flex flex-col justify-center items-center min-w-[140px] border-b md:border-b-0 md:border-r ${turnoEstado === 0 ? "bg-gray-100 text-gray-400" : turnoEstado === 2 ? "bg-green-50/50 text-green-700" : "bg-white text-gray-900"
+          }`}>
           <span className="text-3xl font-bold">{fecha.getDate()}</span>
           <span className="text-sm font-medium uppercase tracking-wider">{fecha.toLocaleDateString('es-AR', { month: 'short' })}</span>
           <div className="mt-2 text-xs font-semibold bg-white/80 px-2 py-1 rounded-full flex items-center gap-1">
-             <Clock className="w-3 h-3" /> {hora}
+            <Clock className="w-3 h-3" /> {hora}
           </div>
         </div>
 
@@ -425,21 +422,20 @@ function TurnoCard({ turno }: { turno: TurnoWithDetails }) {
         <div className="flex-1 p-6 flex flex-col justify-center">
           <div className="flex justify-between items-start mb-2">
             <div>
-               <h3 className={`font-semibold text-lg ${turnoEstado === 0 ? "text-gray-500 line-through" : "text-gray-900"}`}>
-                 {turno.vehiculo_servicio.servicio.nombre}
-               </h3>
-               <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
-                 <Car className="w-3 h-3" /> {turno.vehiculo_servicio.vehiculo.nombre} • {turno.patente}
-               </p>
+              <h3 className={`font-semibold text-lg ${turnoEstado === 0 ? "text-gray-500 line-through" : "text-gray-900"}`}>
+                {turno.vehiculo_servicio.servicio.nombre}
+              </h3>
+              <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                <Car className="w-3 h-3" /> {turno.vehiculo_servicio.vehiculo.nombre} • {turno.patente}
+              </p>
             </div>
             {/* Status Badge */}
-            <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${
-              turnoEstado === 0 
-                ? "bg-red-100 text-red-700"
-                : isPast 
-                  ? "bg-gray-100 text-gray-600"
-                  : "bg-green-100 text-green-700"
-            }`}>
+            <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${turnoEstado === 0
+              ? "bg-red-100 text-red-700"
+              : isPast
+                ? "bg-gray-100 text-gray-600"
+                : "bg-green-100 text-green-700"
+              }`}>
               {turnoEstado === 0 ? (
                 <><XCircle className="w-3 h-3" /> Cancelado</>
               ) : turnoEstado === 2 ? (
@@ -449,39 +445,39 @@ function TurnoCard({ turno }: { turno: TurnoWithDetails }) {
               )}
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between mt-4 text-sm">
-             <div className="flex gap-4 text-gray-500">
-               <span>Seña: ${turno.seniaCongelada}</span>
-               <span className="font-semibold text-gray-900">Total: ${turno.precioCongelado}</span>
-             </div>
-             
-             {turnoEstado !== 0 && turnoEstado !== 2 && (
-               <Button 
-                variant="outline" 
-                size="sm" 
+            <div className="flex gap-4 text-gray-500">
+              <span>Seña: ${turno.seniaCongelada}</span>
+              <span className="font-semibold text-gray-900">Total: ${turno.precioCongelado}</span>
+            </div>
+
+            {turnoEstado !== 0 && turnoEstado !== 2 && (
+              <Button
+                variant="outline"
+                size="sm"
                 className="text-red-500 hover:text-red-600 hover:bg-red-50 border-red-100"
                 onClick={handleCancel}
                 disabled={isCancelling}
-               >
-                 {isCancelling ? "Cancelando..." : "Cancelar Turno"}
-               </Button>
-             )}
-             {/* Renderizado de Modales Condicional */}
+              >
+                {isCancelling ? "Cancelando..." : "Cancelar Turno"}
+              </Button>
+            )}
+            {/* Renderizado de Modales Condicional */}
             {showCancelModal && (
-                <ConfirmCancelModal 
-                    onCancel={() => setShowCancelModal(false)}
-                    onConfirm={async ()=>{let res = await cancelTurno(turno.id); setShowCancelModal(false); if (!res.success) { setShowErrorModal(true); } else { turno.estado=0; router.refresh();}}}
-                />
+              <ConfirmCancelModal
+                onCancel={() => setShowCancelModal(false)}
+                onConfirm={async () => { let res = await cancelTurno(turno.id); setShowCancelModal(false); if (!res.success) { setShowErrorModal(true); } else { turno.estado = 0; router.refresh(); } }}
+              />
             )}
 
             {showErrorModal && (
-                <ModalError 
-                    error={"Ocurrió un error inesperado"} 
-                    onClose={() => setShowErrorModal(false)} 
-                />
+              <ModalError
+                error={"Ocurrió un error inesperado"}
+                onClose={() => setShowErrorModal(false)}
+              />
             )}
-            
+
             {/* Modal de edición futuro
             {showEditModal && (
                 <EditTurnoModal 
@@ -497,61 +493,61 @@ function TurnoCard({ turno }: { turno: TurnoWithDetails }) {
   );
 }
 
-function ConfirmCancelModal({ onConfirm, onCancel}: { onConfirm: () => void, onCancel: () => void}) {
-    const [isPendingConfirm, setIsPendingConfirm] = useState(false);
-    return (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in fade-in zoom-in duration-200">
-                <div className="p-6 text-center">
-                    <div className="w-16 h-16 bg-white text-orange-600 border-2 border-red-800 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl text-center align-baseline">
-                        ⚠️
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-800">¿Cancelar Turno?</h3>
-                    <p className="text-slate-500 mt-2 text-sm">
-                        Esta acción liberará el horario seleccionado. ¿Estás seguro que deseas continuar?
-                    </p>
-                </div>
-                <div className="flex border-t">
-                    <button 
-                        onClick={onCancel}
-                        className="flex-1 p-4 text-slate-600 font-semibold hover:bg-slate-50 transition-colors border-r"
-                    >
-                        Volver
-                    </button>
-                    <button 
-                        onClick={async () => {setIsPendingConfirm(true); await onConfirm(); setIsPendingConfirm(false);}}
-                        disabled={isPendingConfirm}
-                        className="flex-1 p-4 text-red-600 font-bold hover:bg-red-50 transition-colors disabled:opacity-50"
-                    >
-                        {isPendingConfirm ? "Cancelando..." : "Sí, cancelar"}
-                    </button>
-                </div>
-            </div>
+function ConfirmCancelModal({ onConfirm, onCancel }: { onConfirm: () => void, onCancel: () => void }) {
+  const [isPendingConfirm, setIsPendingConfirm] = useState(false);
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="p-6 text-center">
+          <div className="w-16 h-16 bg-white text-orange-600 border-2 border-red-800 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl text-center align-baseline">
+            ⚠️
+          </div>
+          <h3 className="text-xl font-bold text-slate-800">¿Cancelar Turno?</h3>
+          <p className="text-slate-500 mt-2 text-sm">
+            Esta acción liberará el horario seleccionado. ¿Estás seguro que deseas continuar?
+          </p>
         </div>
-    );
+        <div className="flex border-t">
+          <button
+            onClick={onCancel}
+            className="flex-1 p-4 text-slate-600 font-semibold hover:bg-slate-50 transition-colors border-r"
+          >
+            Volver
+          </button>
+          <button
+            onClick={async () => { setIsPendingConfirm(true); await onConfirm(); setIsPendingConfirm(false); }}
+            disabled={isPendingConfirm}
+            className="flex-1 p-4 text-red-600 font-bold hover:bg-red-50 transition-colors disabled:opacity-50"
+          >
+            {isPendingConfirm ? "Cancelando..." : "Sí, cancelar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // Modal de Error
 function ModalError({ error, onClose }: { error: string, onClose: () => void }) {
-    return (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center animate-in fade-in zoom-in duration-200">
-                <div className="w-16 h-16 bg-white text-orange-600 border-2 border-red-800 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                    🚫
-                </div>
-                <h3 className="text-lg font-bold text-slate-800">No se pudo cancelar</h3>
-                <div className="mt-2 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                    <p className="text-sm text-slate-600 italic">"{error}"</p>
-                </div>
-                <button 
-                    onClick={onClose}
-                    className="mt-6 w-full bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-900 transition-shadow shadow-lg shadow-slate-200"
-                >
-                    ENTENDIDO
-                </button>
-            </div>
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center animate-in fade-in zoom-in duration-200">
+        <div className="w-16 h-16 bg-white text-orange-600 border-2 border-red-800 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+          🚫
         </div>
-    );
+        <h3 className="text-lg font-bold text-slate-800">No se pudo cancelar</h3>
+        <div className="mt-2 p-3 bg-slate-50 rounded-lg border border-slate-100">
+          <p className="text-sm text-slate-600 italic">"{error}"</p>
+        </div>
+        <button
+          onClick={onClose}
+          className="mt-6 w-full bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-900 transition-shadow shadow-lg shadow-slate-200"
+        >
+          ENTENDIDO
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function PasswordForm({ user }: { user: any }) {
@@ -579,7 +575,7 @@ function PasswordForm({ user }: { user: any }) {
         setStatus('error');
         setMsg(res.message);
       }
-      
+
       // Limpiamos el mensaje después de 4 segundos
       setTimeout(() => setStatus('idle'), 4000);
     });
@@ -598,7 +594,7 @@ function PasswordForm({ user }: { user: any }) {
       </div>
 
       <form onSubmit={handlePasswordSubmit} className="p-6 md:p-8 grid gap-6 md:grid-cols-2">
-        
+
         {/* Contraseña Actual */}
         <div className="space-y-2 md:col-span-2">
           <label className="text-sm font-medium text-gray-700">Contraseña Actual</label>
@@ -675,9 +671,9 @@ function PasswordForm({ user }: { user: any }) {
             </span>
           )}
 
-          <Button 
-            disabled={isPending} 
-            type="submit" 
+          <Button
+            disabled={isPending}
+            type="submit"
             variant="outline"
             className="min-w-[150px] border-gray-300 text-gray-700 hover:bg-gray-50"
           >
@@ -725,7 +721,7 @@ function AdminUsersPanel({ currentUser }: { currentUser: any }) {
   };
 
   // Filtrado por buscador
-  const filteredUsers = users.filter(u => 
+  const filteredUsers = users.filter(u =>
     u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -740,7 +736,7 @@ function AdminUsersPanel({ currentUser }: { currentUser: any }) {
           </h2>
           <p className="text-sm text-gray-500 mt-1">Gestiona roles y cuentas de la plataforma.</p>
         </div>
-        
+
         {/* Buscador */}
         <div className="relative w-full md:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -779,22 +775,22 @@ function AdminUsersPanel({ currentUser }: { currentUser: any }) {
                     Unido el: {new Date(u.createdAt).toLocaleDateString('es-AR')}
                   </p>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   {/* Evitar que el admin se quite el rol a sí mismo o se borre a sí mismo por error */}
                   {currentUser.id !== u.id && (
                     <>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         disabled={isPending}
                         onClick={() => handleToggleRole(u.id, u.role)}
                         className={`text-xs ${u.role === 'ADMIN' ? 'text-gray-600' : 'text-blue-600'}`}
                       >
-                        {u.role === 'ADMIN' ? <><ShieldOff className="w-3 h-3 mr-1"/> Quitar Admin</> : <><Shield className="w-3 h-3 mr-1"/> Dar Admin</>}
+                        {u.role === 'ADMIN' ? <><ShieldOff className="w-3 h-3 mr-1" /> Quitar Admin</> : <><Shield className="w-3 h-3 mr-1" /> Dar Admin</>}
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         disabled={isPending}
                         onClick={() => setUserToDelete(u.id)}
@@ -818,7 +814,7 @@ function AdminUsersPanel({ currentUser }: { currentUser: any }) {
 
       {/* Modal de confirmación para eliminar usuario */}
       {userToDelete && (
-        <ConfirmDeleteUserModal 
+        <ConfirmDeleteUserModal
           onCancel={() => setUserToDelete(null)}
           onConfirm={handleDelete}
           isPending={isPending}
@@ -830,26 +826,26 @@ function AdminUsersPanel({ currentUser }: { currentUser: any }) {
 
 function ConfirmDeleteUserModal({ onConfirm, onCancel, isPending }: { onConfirm: () => void, onCancel: () => void, isPending: boolean }) {
   return (
-      <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in fade-in zoom-in duration-200">
-              <div className="p-6 text-center">
-                  <div className="w-16 h-16 bg-white text-red-600 border-2 border-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Trash2 className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-800">¿Eliminar Usuario?</h3>
-                  <p className="text-slate-500 mt-2 text-sm">
-                      Esta acción es irreversible. Se eliminará la cuenta y todos los datos asociados (turnos, historial). ¿Estás seguro?
-                  </p>
-              </div>
-              <div className="flex border-t">
-                  <button onClick={onCancel} disabled={isPending} className="flex-1 p-4 text-slate-600 font-semibold hover:bg-slate-50 transition-colors border-r">
-                      Cancelar
-                  </button>
-                  <button onClick={onConfirm} disabled={isPending} className="flex-1 p-4 text-red-600 font-bold hover:bg-red-50 transition-colors disabled:opacity-50">
-                      {isPending ? "Eliminando..." : "Sí, eliminar"}
-                  </button>
-              </div>
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="p-6 text-center">
+          <div className="w-16 h-16 bg-white text-red-600 border-2 border-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Trash2 className="w-8 h-8" />
           </div>
+          <h3 className="text-xl font-bold text-slate-800">¿Eliminar Usuario?</h3>
+          <p className="text-slate-500 mt-2 text-sm">
+            Esta acción es irreversible. Se eliminará la cuenta y todos los datos asociados (turnos, historial). ¿Estás seguro?
+          </p>
+        </div>
+        <div className="flex border-t">
+          <button onClick={onCancel} disabled={isPending} className="flex-1 p-4 text-slate-600 font-semibold hover:bg-slate-50 transition-colors border-r">
+            Cancelar
+          </button>
+          <button onClick={onConfirm} disabled={isPending} className="flex-1 p-4 text-red-600 font-bold hover:bg-red-50 transition-colors disabled:opacity-50">
+            {isPending ? "Eliminando..." : "Sí, eliminar"}
+          </button>
+        </div>
       </div>
+    </div>
   );
 }

@@ -5,6 +5,7 @@ import { deleteExcepcion, softDeleteExcepcion } from "@/actions/excepcionesLabor
 import ExcepcionForm from "./ExcepcionesForm";
 import { Button } from "../ui/button";
 import { useToast } from "@/hooks/useToast";
+import { useConfirm } from "@/hooks/useConfirm";
 
 type Excepcion = {
   id: string;
@@ -24,36 +25,45 @@ export default function ExcepcionesList({ excepciones }: ExcepcionesListProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const { confirm } = useConfirm();
   const { addToast } = useToast();
 
   const handleDelete = async (id: string) => {
-    if (!confirm("¿Estás seguro de que deseas eliminar esta excepción?")) return;
-    
+    const isConfirmed = await confirm({
+      title: "Confirmar eliminación",
+      message: "¿Estás seguro de eliminar este día laboral? Esta acción no se puede deshacer."
+    });
+    if (!isConfirmed) return;
+
     setDeletingId(id);
     startTransition(async () => {
       const result = await deleteExcepcion(id);
       setDeletingId(null);
 
       if (!result.success) {
-        addToast("❌ Error al eliminar la excepción", "error");
+        addToast("Error al eliminar la excepción", "error");
       } else {
-        addToast("✅ Excepción eliminada exitosamente", "success");
+        addToast("Excepción eliminada exitosamente", "success");
       }
     });
   };
 
   const handleSoftDelete = async (id: string) => {
-    if (!confirm("¿Estás seguro de que deseas desactivar esta excepción?")) return;
-    
+    const isConfirmed = await confirm({
+      title: "Confirmar desactivación",
+      message: "¿Estás seguro de que deseas desactivar esta excepción?"
+    });
+    if (!isConfirmed) return;
+
     setDeletingId(id);
     startTransition(async () => {
       const result = await softDeleteExcepcion(id);
       setDeletingId(null);
 
       if (!result.success) {
-        addToast("❌ Error al desactivar la excepción", "error");
+        addToast("Error al desactivar la excepción", "error");
       } else {
-        addToast("✅ Excepción desactivada exitosamente", "success");
+        addToast("Excepción desactivada exitosamente", "success");
       }
     });
   };
@@ -82,9 +92,8 @@ export default function ExcepcionesList({ excepciones }: ExcepcionesListProps) {
       {excepciones.map((excepcion) => (
         <div
           key={excepcion.id}
-          className={`bg-white border rounded-lg shadow-sm overflow-hidden ${
-            !excepcion.estado ? 'opacity-50' : ''
-          }`}
+          className={`bg-white border rounded-lg shadow-sm overflow-hidden ${!excepcion.estado ? 'opacity-50' : ''
+            }`}
         >
           {editingId === excepcion.id ? (
             <div className="p-6">
@@ -112,16 +121,15 @@ export default function ExcepcionesList({ excepciones }: ExcepcionesListProps) {
                       {excepcion.motivo}
                     </h3>
                     <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        excepcion.estado
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
+                      className={`px-2 py-1 text-xs font-medium rounded-full ${excepcion.estado
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                        }`}
                     >
                       {excepcion.estado ? 'Activo' : 'Inactivo'}
                     </span>
                   </div>
-                  
+
                   <div className="space-y-1 text-sm text-gray-600">
                     <p>
                       <span className="font-medium">Desde:</span>{' '}
@@ -147,7 +155,7 @@ export default function ExcepcionesList({ excepciones }: ExcepcionesListProps) {
                   >
                     Editar
                   </Button>
-                  
+
                   {excepcion.estado && (
                     <Button
                       onClick={() => handleSoftDelete(excepcion.id)}

@@ -1,7 +1,6 @@
+// lib/cloudinary.ts
 import { v2 as cloudinary } from "cloudinary";
-import sharp from "sharp";
 
-// Configuración desde variables de entorno
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -9,22 +8,16 @@ cloudinary.config({
 });
 
 interface UploadOptions {
-  folder: string;             // obligatorio, ej: "vehiculos"
-  public_id?: string;         // nombre amigable sin extensión
-  tags?: string[];            // para SEO y organización
+  folder: string;
+  public_id?: string;
+  tags?: string[];
 }
 
 export async function uploadImage(
   fileBuffer: Buffer,
   options: UploadOptions
 ): Promise<{ secure_url: string; public_id: string }> {
-  // 1. Comprimir y convertir a webp
-  const optimizedBuffer = await sharp(fileBuffer)
-    .resize({ width: 1200, withoutEnlargement: true }) // máximo 1200px de ancho
-    .webp({ quality: 80 })
-    .toBuffer();
-
-  // 2. Subir a Cloudinary usando upload_stream (más eficiente)
+  // No necesitamos sharp: la transformación se hace en la subida
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
@@ -32,10 +25,18 @@ export async function uploadImage(
         public_id: options.public_id,
         tags: options.tags,
         resource_type: "image",
-        format: "webp",
-        use_filename: true,          // respeta el public_id provisto
-        unique_filename: false,      // no añade sufijos aleatorios si ya existe
-        overwrite: true,             // si ya existe, lo reemplaza
+        // ---- Transformaciones aplicadas por Cloudinary ----
+        transformation: [
+          {
+            width: 1200,
+            quality: "auto:good",     // compresión automática buena
+            fetch_format: "auto",     // elige el mejor formato (webp, etc.)
+            crop: "limit",            // no agranda imágenes más pequeñas
+          },
+        ],
+        use_filename: true,
+        unique_filename: false,
+        overwrite: true,
       },
       (error, result) => {
         if (error) return reject(error);
@@ -46,7 +47,7 @@ export async function uploadImage(
         });
       }
     );
-    uploadStream.end(optimizedBuffer);
+    uploadStream.end(fileBuffer);
   });
 }
 

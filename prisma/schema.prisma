@@ -29,13 +29,14 @@ model account {
 }
 
 model servicio {
-  id                String              @id
-  nombre            String?
-  srcImage          String?
-  estado            Boolean
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime
-  vehiculo_servicio vehiculo_servicio[]
+  id                 String              @id
+  nombre             String?
+  srcImage           String?
+  cloudinaryPublicId String?
+  estado             Boolean
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime
+  vehiculo_servicio  vehiculo_servicio[]
 }
 
 model turno {
@@ -72,13 +73,14 @@ model user {
 }
 
 model vehiculo {
-  id                String              @id
-  nombre            String?
-  srcImage          String?
-  estado            Boolean
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime
-  vehiculo_servicio vehiculo_servicio[]
+  id                 String              @id
+  nombre             String?
+  srcImage           String?
+  cloudinaryPublicId String?
+  estado             Boolean
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime
+  vehiculo_servicio  vehiculo_servicio[]
 }
 
 model vehiculo_servicio {
@@ -133,7 +135,7 @@ model margenes_laborales {
 }
 
 model configuracion {
-  id    String @id
+  id    String @default(cuid())
   clave String @unique
   valor String
 }

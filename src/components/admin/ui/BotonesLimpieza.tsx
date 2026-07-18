@@ -12,10 +12,7 @@ export default function BotonesLimpieza() {
   const { addToast } = useToast();
   const { confirm } = useConfirm();
   const handleLimpiarAntiguos = async () => {
-    const isConfirmed = await confirm({
-      title: "Confirmar limpieza de turnos antiguos",
-      message: "¿Estás seguro de que deseas ELIMINAR DEFINITIVAMENTE todos los turnos antiguos? Esta acción no se puede deshacer."
-    });
+    const isConfirmed = await confirm("⚠️ ¿Estás seguro de que deseas ELIMINAR DEFINITIVAMENTE todos los turnos antiguos? Esta acción no se puede deshacer.");
     if (!isConfirmed) {
       return;
     }
@@ -25,17 +22,14 @@ export default function BotonesLimpieza() {
     setLoadingAntiguos(false);
 
     if (res.success) {
-      addToast(`Se han eliminado ${res.count} turnos antiguos.`, "success");
+      addToast(`✅ Se han eliminado ${res.count} turnos antiguos.`, "success");
     } else {
-      addToast("Error al limpiar turnos antiguos", "error");
+      addToast(`❌ Error: ${res.error}`, "error");
     }
   };
 
   const handleLimpiarCancelados = async () => {
-    const isConfirmed = await confirm({
-      title: "Confirmar limpieza de turnos cancelados",
-      message: "¿Estás seguro de que deseas ELIMINAR DEFINITIVAMENTE todos los turnos cancelados? Esta acción no se puede deshacer."
-    });
+    const isConfirmed = await confirm("⚠️ ¿Estás seguro de que deseas ELIMINAR DEFINITIVAMENTE todos los turnos cancelados? Esta acción no se puede deshacer.");
     if (!isConfirmed) {
       return;
     }
@@ -45,9 +39,9 @@ export default function BotonesLimpieza() {
     setLoadingCancelados(false);
 
     if (res.success) {
-      addToast(`Se han eliminado ${res.count} turnos cancelados.`, "success");
+      addToast(`✅ Se han eliminado ${res.count} turnos cancelados.`, "success");
     } else {
-      addToast("Error al limpiar turnos cancelados", "error");
+      addToast(`❌ Error: ${res.error}`, "error");
     }
   };
 

@@ -62,25 +62,11 @@ export async function update(
     const dia = parseInt(formData.get("dia") as string);
     const estado = formData.get("estado") === "true";
 
-    // Validar ID
-    if (!id) {
-      return {
-        success: false,
-        error: "ID del día laboral es requerido",
-      };
-    }
-
     // Verificar si existe
     const existing = await prisma.dia_laboral.findUnique({
       where: { id },
     });
 
-    if (!existing) {
-      return {
-        success: false,
-        error: "Día laboral no encontrado",
-      };
-    }
 
     // Verificar conflictos con otros días
     const conflict = await prisma.dia_laboral.findFirst({

@@ -6,7 +6,6 @@ import { DiaLaboralForm } from "@/components/diaLaboral/diaLaboralForm";
 import { DiaLaboralList } from "@/components/diaLaboral/diaLaboralList";
 import { HorariosList } from "@/components/horarios/horariosList";
 import { deleteDiaLaboral } from "@/actions/diaLaboral.actions";
-import { useConfirm } from "@/hooks/useConfirm";
 import {
   deleteMargenLaboral,
   getMargenesLaborales,
@@ -54,7 +53,6 @@ export function DiaLaboralClient({ initialData }: DiaLaboralClientProps) {
   const [editingDia, setEditingDia] = useState<DiaLaboral | null>(null);
   const [selectedDia, setSelectedDia] = useState<DiaLaboral | null>(null);
   const [margenes, setMargenes] = useState<any[]>([]);
-  const { confirm } = useConfirm();
 
   const handleCreate = () => {
     setEditingDia(null);
@@ -67,11 +65,7 @@ export function DiaLaboralClient({ initialData }: DiaLaboralClientProps) {
   };
 
   const handleDelete = async (id: string) => {
-    const isConfirmed = await confirm({
-      title: "Confirmar eliminación",
-      message: "¿Estás seguro de eliminar este día laboral? Esta acción no se puede deshacer."
-    });
-    if (!isConfirmed) return;
+    if (!confirm("¿Estás seguro de eliminar este día laboral?")) return;
 
     startTransition(async () => {
       const result = await deleteDiaLaboral(id);
@@ -99,11 +93,7 @@ export function DiaLaboralClient({ initialData }: DiaLaboralClientProps) {
   };
 
   const handleDeleteMargen = async (margenId: string) => {
-    const isConfirmed = await confirm({
-      title: "Confirmar eliminación",
-      message: "¿Estás seguro de eliminar este horario? Esta acción no se puede deshacer."
-    });
-    if (!isConfirmed) return;
+    if (!confirm("¿Estás seguro de eliminar este horario?")) return;
 
     startTransition(async () => {
       const result = await deleteMargenLaboral(margenId);
@@ -140,8 +130,8 @@ export function DiaLaboralClient({ initialData }: DiaLaboralClientProps) {
     <>
       <div className="flex justify-between mb-6">
         <div className="flex flex-row flex-wrap gap-5">
-          <Link href="/admin"><Button variant={"celeste"}>Gestionar Turnos</Button></Link>
-          <Link href="/excepcionesLaborales"><Button variant={"rojo"}>Gestionar Feriados</Button></Link>
+        <Link href="/admin"><Button variant={"celeste"}>Gestionar Turnos</Button></Link>
+        <Link href="/excepcionesLaborales"><Button variant={"rojo"}>Gestionar Feriados</Button></Link>
         </div>
         <Button
           onClick={handleCreate}

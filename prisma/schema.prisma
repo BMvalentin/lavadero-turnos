@@ -134,6 +134,12 @@ model margenes_laborales {
   @@index([diaId])
 }
 
+model configuracion {
+  id    String @default(cuid())
+  clave String @unique
+  valor String
+}
+
 enum user_role {
   USER
   ADMIN

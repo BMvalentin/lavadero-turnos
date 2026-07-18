@@ -1,17 +1,21 @@
 "use client";
 
 import { deleteTurno, completedTurno } from "@/actions/turno.actions";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState } from "react";
+import { useState } from "react";
 import EditTurnoModal from "./EditarTurnoModal";
 import { Button } from "../ui/button";
 import { useMemo } from "react";
-import { useConfirm } from "@/hooks/useConfirm";
-import { useToast } from "@/hooks/useToast";
 
 const initialState = {
   success: false,
   error: undefined,
-  data: undefined,
+  data: undefined
+};
+const initialStateComplete = {
+  success: false,
+  error: undefined,
+  data: undefined
 };
 
 type Turno = {
@@ -49,8 +53,11 @@ export default function TurnoList({ session, turnos }: { session: any; turnos: T
     );
   }
 
+  // --- LÓGICA DE FILTRADO Y ORDENAMIENTO ---
   const { turnosHoy, turnosRestantes } = useMemo(() => {
     const hoy = new Date().toDateString();
+
+    // 1. Separamos los de hoy del resto
     const hoyList: Turno[] = [];
     const restoList: Turno[] = [];
 
@@ -63,9 +70,12 @@ export default function TurnoList({ session, turnos }: { session: any; turnos: T
       }
     });
 
+    // 2. Ordenamos: Hoy (del más temprano al más tarde para trabajar mejor)
     hoyList.sort((a, b) =>
       new Date(a.horarioReservado).getTime() - new Date(b.horarioReservado).getTime()
     );
+
+    // 3. Ordenamos: Resto (del más nuevo al más viejo, como pediste)
     restoList.sort((a, b) =>
       new Date(b.horarioReservado).getTime() - new Date(a.horarioReservado).getTime()
     );
@@ -95,7 +105,7 @@ export default function TurnoList({ session, turnos }: { session: any; turnos: T
 
         {turnosHoy.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {turnosHoy.map((turno) => (
+            {turnosHoy.map((turno: Turno) => (
               <TurnoCard session={session} key={turno.id} turno={turno} />
             ))}
           </div>
@@ -108,12 +118,12 @@ export default function TurnoList({ session, turnos }: { session: any; turnos: T
 
       <hr className="border-gray-200" />
 
-      {/* SECCIÓN: RESTO */}
+      {/* SECCIÓN: RESTO (Historial y Futuros) */}
       <section>
         <h2 className="text-xl font-bold text-gray-800 mb-4">Otros Turnos</h2>
         {turnosRestantes.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {turnosRestantes.map((turno) => (
+            {turnosRestantes.map((turno: Turno) => (
               <TurnoCard session={session} key={turno.id} turno={turno} />
             ))}
           </div>
@@ -127,93 +137,43 @@ export default function TurnoList({ session, turnos }: { session: any; turnos: T
 
 function TurnoCard({ session, turno }: { session: any; turno: Turno }) {
   const [state, formAction] = useActionState(deleteTurno, initialState);
-  const [stateComplete, formActionComplete] = useActionState(completedTurno, initialState);
+  const [stateComplete, formActionComplete] = useActionState(completedTurno, initialStateComplete);
   const [showEditModal, setShowEditModal] = useState(false);
-  const completeFormRef = useRef<HTMLFormElement>(null);
-  const deleteFormRef = useRef<HTMLFormElement>(null);
-  const { confirm } = useConfirm();
-  const { addToast } = useToast();
-
-  // Toasts para la acción de eliminación
-  useEffect(() => {
-    if (state.success) {
-      addToast("Turno cancelado exitosamente", "success");
-    }
-    if (state.error) {
-      addToast("Error al cancelar el turno", "error");
-    }
-  }, [state.success, state.error, addToast]);
-
-  // Toasts para la acción de completar
-  useEffect(() => {
-    if (stateComplete.success) {
-      addToast("Turno completado exitosamente", "success");
-    }
-    if (stateComplete.error) {
-      addToast("Error al completar el turno", "error");
-    }
-  }, [stateComplete.success, stateComplete.error, addToast]);
 
   const formatFecha = (fecha: Date) => {
-    return new Date(fecha).toLocaleString("es-AR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+    return new Date(fecha).toLocaleString('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
   const formatPrecio = (precio: number) => {
-    return new Intl.NumberFormat("es-AR", {
-      style: "currency",
-      currency: "ARS",
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS'
     }).format(precio);
   };
 
+  // Determinar si el turno es pasado, hoy o futuro
   const fechaTurno = new Date(turno.horarioReservado);
   const hoy = new Date();
   const isPasado = fechaTurno < hoy;
   const isHoy = fechaTurno.toDateString() === hoy.toDateString();
 
-  const handleComplete = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    const ok = await confirm({
-      title: "Confirmar acción",
-      message:
-        "¿Estás seguro de marcar este turno como completado? Esta acción no se puede deshacer.",
-    });
-    if (ok) {
-      completeFormRef.current?.requestSubmit();
-    }
-  };
-
-  const handleDelete = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    const ok = await confirm({
-      title: "Cancelar turno",
-      message: "¿Estás seguro de cancelar este turno?",
-    });
-    if (ok) {
-      deleteFormRef.current?.requestSubmit();
-    }
-  };
-
   return (
     <>
-      <div
-        className={`bg-white rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden ${isPasado ? "opacity-75" : ""
-          }`}
-      >
+      <div className={`bg-white rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden ${isPasado ? 'opacity-75' : ''
+        }`}>
         {/* Header */}
-        <div
-          className={`p-4 text-white ${isPasado ? "bg-gray-500" : isHoy ? "bg-green-700" : "bg-[#6fa9da]"
-            }`}
-        >
+        <div className={`p-4 text-white ${isPasado ? 'bg-gray-500' : isHoy ? 'bg-green-700' : 'bg-[#6fa9da]'
+          }`}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm opacity-90">
-                {isPasado ? "🕐 Pasado" : isHoy ? "📅 Hoy" : "📅 Próximo"}
+                {isPasado ? '🕐 Pasado' : isHoy ? '📅 Hoy' : '📅 Próximo'}
               </p>
               <p className="font-bold text-lg">{formatFecha(fechaTurno)}</p>
             </div>
@@ -237,8 +197,7 @@ function TurnoCard({ session, turno }: { session: any; turno: Turno }) {
           <div className="border-t pt-3">
             <p className="text-xs text-gray-500 uppercase">Servicio</p>
             <p className="font-semibold text-gray-800">
-              {turno.vehiculo_servicio.vehiculo.nombre} -{" "}
-              {turno.vehiculo_servicio.servicio.nombre}
+              {turno.vehiculo_servicio.vehiculo.nombre} - {turno.vehiculo_servicio.servicio.nombre}
             </p>
             <p className="text-sm text-gray-600">
               Duración: {turno.vehiculo_servicio.duracion} min
@@ -264,60 +223,82 @@ function TurnoCard({ session, turno }: { session: any; turno: Turno }) {
 
           {/* Acciones */}
           <div className="flex gap-2 pt-3">
-            {/* Botón Completar (solo admin y turno pasado) */}
-            {session?.user.role === "ADMIN" && isPasado && (
-              <form
-                ref={completeFormRef}
-                action={formActionComplete}
-                className="flex-1"
-              >
+            {(session?.user.role === "ADMIN" && isPasado) &&
+              <form className="w-full flex flex-wrap" action={formActionComplete}>
                 <input type="hidden" name="id" value={turno.id} />
+
                 <Button
-                  onClick={handleComplete}
+                  onClick={(e) => {
+                    if (!confirm('¿Estás seguro de completar este turno?')) {
+                      e.preventDefault();
+                    }
+                  }}
                   type="submit"
                   variant={"verde"}
-                  className="w-full py-2 rounded text-sm font-medium"
+                  className="flex-1 py-2 rounded text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   Completar
-                </Button>
-              </form>
-            )}
-
-            {/* Botón Editar (admin no pasado) o usuario no admin */}
-            {session?.user.role === "ADMIN" && !isPasado && (
+                </Button></form>}
+            {(session?.user.role === "ADMIN" && !isPasado) &&
               <Button
                 onClick={() => setShowEditModal(true)}
                 variant={"celeste"}
-                className="flex-1 py-2 rounded text-sm font-medium"
-              >
-                Editar
-              </Button>
-            )}
-
-            {session?.user.role !== "ADMIN" && (
-              <Button
-                onClick={isPasado ? undefined : () => setShowEditModal(true)}
-                variant={isPasado ? "ghost" : "celeste"}
-                disabled={isPasado}
                 className="flex-1 py-2 rounded text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                {isPasado ? "Fecha pasada por gestionar" : "Editar"}
-              </Button>
-            )}
+                Editar
+              </Button>}
+            {session?.user.role !== "ADMIN" && <Button
+              onClick={isPasado ? () => { } : () => setShowEditModal(true)}
+              variant={isPasado ? "ghost" : "celeste"}
+              disabled={isPasado}
+              className="flex-1 py-2 rounded text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {isPasado ? "Fecha pasada por gestionar" : "Editar"}
+            </Button>}
 
-            {/* Botón Cancelar (siempre visible) */}
-            <form ref={deleteFormRef} action={formAction}>
+            <form action={formAction}>
               <input type="hidden" name="id" value={turno.id} />
               <Button
                 type="submit"
                 variant={"rojo"}
-                onClick={handleDelete}
-                className="px-4 py-2 text-sm font-medium"
+                onClick={(e) => {
+                  if (!confirm('¿Estás seguro de cancelar este turno?')) {
+                    e.preventDefault();
+                  }
+                }}
+                className="px-4 py-2text-sm font-medium"
               >
                 Cancelar
               </Button>
             </form>
           </div>
+
+          {state.error && (
+            <p className="text-red-600 text-xs mt-2">{state.error}</p>
+          )}
+          {state.success && (
+            <div className="mt-3 p-3 bg-red-50 border border-red-100 rounded-lg text-center space-y-2">
+              <p className="text-red-700 text-sm font-medium">✅ Turno cancelado</p>
+              {state.data?.whatsappUrl && (
+                <a
+                  href={state.data.whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center bg-[#25D366] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-[#128C7E] transition-colors w-full"
+                >
+                  Notificar Cancelación
+                </a>
+              )}
+            </div>
+          )}
+          {stateComplete.error && (
+            <p className="text-red-600 text-xs mt-2">{stateComplete.error}</p>
+          )}
+          {stateComplete.success && (
+            <p className="text-green-600 text-xs mt-2">
+              ✅ Turno completado
+            </p>
+          )}
         </div>
       </div>
 

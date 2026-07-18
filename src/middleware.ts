@@ -12,9 +12,9 @@ export default auth((req) => {
   const isApiAuthRoute = nextUrl.pathname.startsWith("/api/auth");
   const isAuthRoute = ["/login", "/register"].includes(nextUrl.pathname);
   const isAdminRoute = nextUrl.pathname.startsWith("/admin");
-  const isGestionRoute = ["/excepcionesLaborales", "/diaLaboral"].some(r => nextUrl.pathname.startsWith(r));
+  const isGestionRoute = ["/admin", "/excepcionesLaborales", "/diaLaboral"].includes(nextUrl.pathname);
   
-  const isProtectedRoute = ["/dashboard", "/turnos", "/admin", "/excepcionesLaborales", "/diaLaboral"].some((route) =>
+  const isProtectedRoute = ["/dashboard", "/turnos", "/admin", "/excepcionesLaborales", "/diaLaboral"].some((route) => 
     nextUrl.pathname.startsWith(route)
   );
 
@@ -34,12 +34,12 @@ export default auth((req) => {
       const callbackUrl = nextUrl.pathname + nextUrl.search;
       return NextResponse.redirect(new URL(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`, nextUrl));
     }
-
+    
     if (userRole !== "ADMIN") {
       // Redirigir si no tiene permisos
       return NextResponse.redirect(new URL("/dashboard", nextUrl));
     }
-
+    
     return NextResponse.next();
   }
 

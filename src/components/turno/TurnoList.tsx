@@ -26,18 +26,20 @@ export default function TurnoList({ session, turnos }: { session: any; turnos: a
     hoyList.sort((a, b) => new Date(a.horarioReservado).getTime() - new Date(b.horarioReservado).getTime());
     restoList.sort((a, b) => new Date(b.horarioReservado).getTime() - new Date(a.horarioReservado).getTime());
 
-        // 2. Ordenamos: Hoy (del más temprano al más tarde para trabajar mejor)
-        hoyList.sort((a, b) => 
-            new Date(a.horarioReservado).getTime() - new Date(b.horarioReservado).getTime()
-        );
+    return { turnosHoy: hoyList, turnosRestantes: restoList };
+  }, [turnos]);
 
-        // 3. Ordenamos: Resto (del más nuevo al más viejo, como pediste)
-        restoList.sort((a, b) => 
-            new Date(b.horarioReservado).getTime() - new Date(a.horarioReservado).getTime()
-        );
+  if (turnos.length === 0) {
+    return (
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+        <p className="text-gray-600">No hay turnos reservados</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10">
+      {/* SECCIÓN: HOY */}
       <section>
         <div className="flex items-center gap-2 mb-4">
           <span className="flex h-3 w-3 rounded-full bg-green-500 animate-pulse"></span>
@@ -46,39 +48,21 @@ export default function TurnoList({ session, turnos }: { session: any; turnos: a
             {turnosHoy.length}
           </span>
         </div>
+
         {turnosHoy.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {turnosHoy.map((turno) => <TurnoCard session={session} key={turno.id} turno={turno} />)}
+            {turnosHoy.map((turno) => (
+              <TurnoCard session={session} key={turno.id} turno={turno} />
+            ))}
           </div>
         ) : (
-          <p className="text-gray-500 italic bg-gray-50 p-4 rounded-lg border border-dashed text-sm">No hay turnos hoy.</p>
+          <p className="text-gray-500 italic bg-gray-50 p-4 rounded-lg border border-dashed text-sm">
+            No hay turnos programados para el día de hoy.
+          </p>
         )}
       </section>
 
-    return (
-        <div className="space-y-10">
-            {/* SECCIÓN: HOY */}
-            <section>
-                <div className="flex items-center gap-2 mb-4">
-                    <span className="flex h-3 w-3 rounded-full bg-green-500 animate-pulse"></span>
-                    <h2 className="text-xl font-bold text-gray-800">Turnos de Hoy</h2>
-                    <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">
-                        {turnosHoy.length}
-                    </span>
-                </div>
-                
-                {turnosHoy.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {turnosHoy.map((turno: Turno) => (
-                            <TurnoCard session={session} key={turno.id} turno={turno} />
-                        ))}
-                    </div>
-                ) : (
-                    <p className="text-gray-500 italic bg-gray-50 p-4 rounded-lg border border-dashed text-sm">
-                        No hay turnos programados para el día de hoy.
-                    </p>
-                )}
-            </section>
+      <hr className="border-gray-200" />
 
       <section>
         <h2 className="text-xl font-bold text-gray-800 mb-4">Otros Turnos</h2>

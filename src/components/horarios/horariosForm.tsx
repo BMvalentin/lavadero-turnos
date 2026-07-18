@@ -132,7 +132,8 @@ export function HorariosForm({
         <Label className="text-base font-semibold text-cyan-700">
           Estado del Horario
         </Label>
-        <div className="flex items-center justify-between p-5 border-2 border-cyan-300 rounded-lg bg-gradient-to-br from-cyan-50/50 to-white hover:border-cyan-500 transition-colors">
+        {/* Cambio realizado acá: bg-gradient-... reemplazado por bg-white */}
+        <div className="flex items-center justify-between p-5 border-2 border-cyan-300 rounded-lg bg-white hover:border-cyan-500 transition-colors">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Label

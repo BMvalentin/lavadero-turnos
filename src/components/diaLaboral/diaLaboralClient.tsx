@@ -205,7 +205,7 @@ export function DiaLaboralClient({ initialData }: DiaLaboralClientProps) {
         open={isHorariosDialogOpen}
         onOpenChange={setIsHorariosDialogOpen}
       >
-        <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto border-4 border-cyan-400 shadow-2xl bg-[#FFF8DC]">
+        <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto border-4 border-cyan-400 shadow-2xl bg-white">
           <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-cyan-500 via-cyan-400 to-cyan-300 rounded-t-2xl" />
 
           <div className="py-2">

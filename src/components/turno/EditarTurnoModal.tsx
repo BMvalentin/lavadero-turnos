@@ -3,10 +3,9 @@
 import { actualizarTurno } from "@/actions/turno.actions";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import SeleccionadorHorario from "./SeleccionadorHorario";
 import { Button } from "../ui/button";
-import { useToast } from "@/hooks/useToast";
 
 const initialState = {
     success: false,
@@ -45,15 +44,19 @@ type EditTurnoModalProps = {
 export default function EditTurnoModal({ session, turno, onClose }: EditTurnoModalProps) {
     const [state, formAction] = useActionState(actualizarTurno, initialState);
     const formRef = useRef<HTMLFormElement>(null);
-    const { addToast } = useToast();
+    const [whatsappLink, setWhatsappLink] = useState<string | null>(null);
 
     useEffect(() => {
         if (state.success) {
-            addToast("✅ Turno actualizado exitosamente", "success");
-            onClose();
+            if (state.data?.whatsappUrl) {
+                setWhatsappLink(state.data.whatsappUrl);
+            } else {
+                alert("✅ Turno actualizado exitosamente!");
+                onClose();
+            }
         }
         if (state.error) {
-            addToast(`❌ Error: ${state.error}`, "error");
+            alert(`❌ Error: ${state.error}`);
         }
     }, [state.success, state.error, onClose]);
 
@@ -71,7 +74,7 @@ export default function EditTurnoModal({ session, turno, onClose }: EditTurnoMod
         const day = String(d.getDate()).padStart(2, '0');
         const hours = String(d.getHours()).padStart(2, '0');
         const minutes = String(d.getMinutes()).padStart(2, '0');
-        
+
         // Retorna el formato exacto que esperan los inputs de fecha/hora: 2024-10-25T08:00
         return `${year}-${month}-${day}T${hours}:${minutes}`;
     };
@@ -89,58 +92,89 @@ export default function EditTurnoModal({ session, turno, onClose }: EditTurnoMod
                         </button>
                     </div>
 
-                    <div className="bg-gray-50 rounded-lg p-4 mb-4 space-y-2">
-                        {/* Info del cliente y servicio... */}
-                        <p className="text-xs text-gray-500 uppercase">Cliente</p>
-                        <p className="font-semibold">{turno.user.name}</p>
-                        <p className="text-xs text-gray-500 uppercase mt-2">Servicio</p>
-                        <p className="font-semibold">
-                            {turno.vehiculo_servicio.vehiculo.nombre} - {turno.vehiculo_servicio.servicio.nombre}
-                        </p>
-                    </div>
-
-                    <form ref={formRef} action={formAction} className="space-y-4">
-                        <input type="hidden" name="id" value={turno.id} />
-
-                        {/* SOLUCIÓN: 
-                           1. Usamos new Date() para evitar el error de "not a function".
-                           2. Usamos nuestra función local para evitar el salto de +3hs del UTC.
-                        */}
-                        <SeleccionadorHorario 
-                            name="horarioReservado"
-                            vehiculoServicioId={turno.vehiculo_servicio.id}
-                            turnoIdAExcluir={turno?.id}
-                            defaultValue={formatDateForInput(turno.horarioReservado)}
-                        />
-
-                        <div>
-                            <label htmlFor="patente" className="block text-sm font-medium mb-1">
-                                Patente *
-                            </label>
-                            <input
-                                type="text"
-                                id="patente"
-                                name="patente"
-                                required
-                                maxLength={10}
-                                defaultValue={turno.patente}
-                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
-                            />
-                        </div>
-
-                        {state.error && (
-                            <div className="bg-red-50 border border-red-200 rounded p-3">
-                                <p className="text-red-600 text-sm">{state.error}</p>
+                    {whatsappLink ? (
+                        <div className="py-6 flex flex-col items-center gap-4">
+                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-2">
+                                <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
                             </div>
-                        )}
-
-                        <div className="flex gap-2 pt-4">
-                            <Button type="button" variant={"rojo"} onClick={onClose} className="flex-1 px-4 py-2">
-                                Cancelar
+                            <h3 className="text-xl font-bold text-gray-800">¡Turno Modificado!</h3>
+                            <p className="text-gray-600 text-center px-4">
+                                Los cambios se guardaron correctamente. Por favor notifica al local.
+                            </p>
+                            <a
+                                href={whatsappLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => {
+                                    setWhatsappLink(null);
+                                    onClose();
+                                }}
+                                className="mt-2 inline-flex items-center justify-center bg-[#25D366] text-white px-6 py-3 rounded-lg font-bold hover:bg-[#128C7E] transition-colors w-full"
+                            >
+                                Enviar WhatsApp
+                            </a>
+                            <Button type="button" variant="ghost" onClick={onClose} className="w-full mt-2">
+                                Cerrar
                             </Button>
-                            <SubmitButton />
                         </div>
-                    </form>
+                    ) : (
+                        <>
+                            <div className="bg-gray-50 rounded-lg p-4 mb-4 space-y-2">
+                                {/* Info del cliente y servicio... */}
+                                <p className="text-xs text-gray-500 uppercase">Cliente</p>
+                                <p className="font-semibold">{turno.user.name}</p>
+                                <p className="text-xs text-gray-500 uppercase mt-2">Servicio</p>
+                                <p className="font-semibold">
+                                    {turno.vehiculo_servicio.vehiculo.nombre} - {turno.vehiculo_servicio.servicio.nombre}
+                                </p>
+                            </div>
+
+                            <form ref={formRef} action={formAction} className="space-y-4">
+                                <input type="hidden" name="id" value={turno.id} />
+
+                                {/* SOLUCIÓN: 
+                                1. Usamos new Date() para evitar el error de "not a function".
+                                2. Usamos nuestra función local para evitar el salto de +3hs del UTC.
+                                */}
+                                <SeleccionadorHorario
+                                    name="horarioReservado"
+                                    vehiculoServicioId={turno.vehiculo_servicio.id}
+                                    turnoIdAExcluir={turno?.id}
+                                    defaultValue={formatDateForInput(turno.horarioReservado)}
+                                />
+
+                                <div>
+                                    <label htmlFor="patente" className="block text-sm font-medium mb-1">
+                                        Patente *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="patente"
+                                        name="patente"
+                                        required
+                                        maxLength={10}
+                                        defaultValue={turno.patente}
+                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
+                                    />
+                                </div>
+
+                                {state.error && (
+                                    <div className="bg-red-50 border border-red-200 rounded p-3">
+                                        <p className="text-red-600 text-sm">{state.error}</p>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-2 pt-4">
+                                    <Button type="button" variant={"rojo"} onClick={onClose} className="flex-1 px-4 py-2">
+                                        Cancelar
+                                    </Button>
+                                    <SubmitButton />
+                                </div>
+                            </form>
+                        </>
+                    )}
                 </div>
             </div>
         </div>

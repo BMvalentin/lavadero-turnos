@@ -20,39 +20,39 @@ const initialStateComplete = {
 };
 
 type Turno = {
-  id: string;
-  horarioReservado: Date;
-  patente: string;
-  precioCongelado: number;
-  seniaCongelada: number;
-  estado: number;
-  user: {
     id: string;
-    name: string | null;
-    email: string | null;
-  };
-  vehiculo_servicio: {
-    id: string;
-    vehiculo: {
-      id: string;
-      nombre: string | null;
+    horarioReservado: Date;
+    patente: string;
+    precioCongelado: number;
+    seniaCongelada: number;
+    estado: number;
+    user: {
+        id: string;
+        name: string | null;
+        email: string | null;
     };
-    servicio: {
-      id: string;
-      nombre: string | null;
+    vehiculo_servicio: {
+        id: string;
+        vehiculo: {
+            id: string;
+            nombre: string | null;
+        };
+        servicio: {
+            id: string;
+            nombre: string | null;
+        };
+        duracion: number;
     };
-    duracion: number;
-  };
 };
 
 export default function TurnoList({ session, turnos }: { session: any; turnos: Turno[] }) {
-  if (!Array.isArray(turnos)) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-600">Error: datos inválidos</p>
-      </div>
-    );
-  }
+    if (!Array.isArray(turnos)) {
+        return (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-600">Error: datos inválidos</p>
+            </div>
+        );
+    }
 
   // --- LÓGICA DE FILTRADO Y ORDENAMIENTO ---
   const { turnosHoy, turnosRestantes } = useMemo(() => {
@@ -61,14 +61,9 @@ export default function TurnoList({ session, turnos }: { session: any; turnos: T
     const hoyList: Turno[] = [];
     const restoList: Turno[] = [];
 
-    turnos.forEach((t) => {
-      const fechaTurno = new Date(t.horarioReservado).toDateString();
-      if (fechaTurno === hoy) {
-        hoyList.push(t);
-      } else {
-        restoList.push(t);
-      }
-    });
+        // 1. Separamos los de hoy del resto
+        const hoyList: Turno[] = [];
+        const restoList: Turno[] = [];
 
     hoyList.sort((a, b) =>
       new Date(a.horarioReservado).getTime() - new Date(b.horarioReservado).getTime()
@@ -78,28 +73,18 @@ export default function TurnoList({ session, turnos }: { session: any; turnos: T
       new Date(b.horarioReservado).getTime() - new Date(a.horarioReservado).getTime()
     );
 
-    return { turnosHoy: hoyList, turnosRestantes: restoList };
-  }, [turnos]);
+        // 2. Ordenamos: Hoy (del más temprano al más tarde para trabajar mejor)
+        hoyList.sort((a, b) => 
+            new Date(a.horarioReservado).getTime() - new Date(b.horarioReservado).getTime()
+        );
 
-  if (turnos.length === 0) {
-    return (
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-        <p className="text-gray-600">No hay turnos reservados</p>
-      </div>
-    );
-  }
+        // 3. Ordenamos: Resto (del más nuevo al más viejo, como pediste)
+        restoList.sort((a, b) => 
+            new Date(b.horarioReservado).getTime() - new Date(a.horarioReservado).getTime()
+        );
 
-  return (
-    <div className="space-y-10">
-      {/* SECCIÓN: HOY */}
-      <section>
-        <div className="flex items-center gap-2 mb-4">
-          <span className="flex h-3 w-3 rounded-full bg-green-500 animate-pulse"></span>
-          <h2 className="text-xl font-bold text-gray-800">Turnos de Hoy</h2>
-          <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">
-            {turnosHoy.length}
-          </span>
-        </div>
+        return { turnosHoy: hoyList, turnosRestantes: restoList };
+    }, [turnos]);
 
         {turnosHoy.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -114,7 +99,30 @@ export default function TurnoList({ session, turnos }: { session: any; turnos: T
         )}
       </section>
 
-      <hr className="border-gray-200" />
+    return (
+        <div className="space-y-10">
+            {/* SECCIÓN: HOY */}
+            <section>
+                <div className="flex items-center gap-2 mb-4">
+                    <span className="flex h-3 w-3 rounded-full bg-green-500 animate-pulse"></span>
+                    <h2 className="text-xl font-bold text-gray-800">Turnos de Hoy</h2>
+                    <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+                        {turnosHoy.length}
+                    </span>
+                </div>
+                
+                {turnosHoy.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {turnosHoy.map((turno: Turno) => (
+                            <TurnoCard session={session} key={turno.id} turno={turno} />
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-gray-500 italic bg-gray-50 p-4 rounded-lg border border-dashed text-sm">
+                        No hay turnos programados para el día de hoy.
+                    </p>
+                )}
+            </section>
 
       {/* SECCIÓN: RESTO (Historial y Futuros) */}
       <section>
@@ -183,15 +191,22 @@ function TurnoCard({ session, turno }: { session: any; turno: Turno }) {
           </div>
         </div>
 
-        {/* Contenido */}
-        <div className="p-4 space-y-3">
-          <div>
-            <p className="text-xs text-gray-500 uppercase">Cliente</p>
-            <p className="font-semibold text-gray-800">{turno.user.name}</p>
-            {turno.user.email && (
-              <p className="text-sm text-gray-600">{turno.user.email}</p>
-            )}
-          </div>
+                    <div className="border-t pt-3 grid grid-cols-2 gap-2">
+                        <div>
+                            <p className="text-xs text-gray-500">Precio</p>
+                            <p className="font-bold text-green-600">
+                                {formatPrecio(turno.precioCongelado)}
+                            </p>
+                        </div>
+                        {turno.seniaCongelada > 0 && (
+                            <div>
+                                <p className="text-xs text-gray-500">Seña</p>
+                                <p className="font-bold text-blue-600">
+                                    {formatPrecio(turno.seniaCongelada)}
+                                </p>
+                            </div>
+                        )}
+                    </div>
 
           <div className="border-t pt-3">
             <p className="text-xs text-gray-500 uppercase">Servicio</p>
@@ -203,12 +218,23 @@ function TurnoCard({ session, turno }: { session: any; turno: Turno }) {
             </p>
           </div>
 
-          <div className="border-t pt-3 grid grid-cols-2 gap-2">
-            <div>
-              <p className="text-xs text-gray-500">Precio</p>
-              <p className="font-bold text-green-600">
-                {formatPrecio(turno.precioCongelado)}
-              </p>
+                    {state.error && (
+                        <p className="text-red-600 text-xs mt-2">{state.error}</p>
+                    )}
+                    {state.success && (
+                        <p className="text-green-600 text-xs mt-2">
+                            ✅ Turno cancelado
+                        </p>
+                    )}
+                    {stateComplete.error && (
+                        <p className="text-red-600 text-xs mt-2">{stateComplete.error}</p>
+                    )}
+                    {stateComplete.success && (
+                        <p className="text-green-600 text-xs mt-2">
+                            ✅ Turno completado
+                        </p>
+                    )}
+                </div>
             </div>
             {turno.seniaCongelada > 0 && (
               <div>

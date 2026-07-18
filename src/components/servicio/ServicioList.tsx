@@ -50,10 +50,10 @@ function ServicioCard({ servicio }: { servicio: Servicio }) {
   // Mostrar toasts según el resultado de la acción
   useEffect(() => {
     if (state.success) {
-      addToast("Servicio dado de baja exitosamente", "success");
+      addToast("✅ Servicio dado de baja exitosamente", "success");
     }
     if (state.error) {
-      addToast("Error al dar de baja el servicio", "error");
+      addToast(`❌ ${state.error}`, "error");
     }
   }, [state.success, state.error, addToast]);
 
@@ -125,8 +125,8 @@ function ServicioCard({ servicio }: { servicio: Servicio }) {
             <span>{servicio.vehiculo_servicio.length} vehículo(s)</span>
             <span
               className={`px-2 py-1 rounded text-xs font-medium ${servicio.estado
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
                 }`}
             >
               {servicio.estado ? "Activo" : "Inactivo"}

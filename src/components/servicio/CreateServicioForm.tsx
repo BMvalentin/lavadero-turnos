@@ -1,9 +1,10 @@
 "use client";
 
 import { createServicio } from "@/actions/servicio-actions";
-import { useActionState, useState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "../ui/button";
+import ImageLoader from "../ui/ImageLoader";
 
 const initialState = {
     success: false,
@@ -14,29 +15,13 @@ const initialState = {
 export default function CreateServicioForm() {
     const [state, formAction] = useActionState(createServicio, initialState);
     const formRef = useRef<HTMLFormElement>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (state.success) {
             formRef.current?.reset();
-            if (previewUrl) {
-                URL.revokeObjectURL(previewUrl);
-                setPreviewUrl(null);
-            }
+            alert("Servicio creado exitosamente");
         }
-    }, [state.success]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            if (previewUrl) URL.revokeObjectURL(previewUrl);
-            setPreviewUrl(URL.createObjectURL(file));
-        } else {
-            if (previewUrl) URL.revokeObjectURL(previewUrl);
-            setPreviewUrl(null);
-        }
-    };
+    }, [state.success]);
 
     return (
         <div className="bg-white rounded-lg shadow p-6">
@@ -58,23 +43,10 @@ export default function CreateServicioForm() {
                 </div>
 
                 <div>
-                    <label htmlFor="srcImage" className="block text-sm font-medium mb-1">
-                        Imagen del servicio
+                    <label className="block text-sm font-medium mb-1">
+                        Imagen del Servicio
                     </label>
-                    <input
-                        type="file"
-                        id="srcImage"
-                        name="srcImage"
-                        accept="image/*"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {previewUrl && (
-                        <div className="mt-2">
-                            <img src={previewUrl} alt="Vista previa" className="h-32 w-auto rounded border" />
-                        </div>
-                    )}
+                    <ImageLoader name="srcImage" />
                 </div>
 
                 <div className="flex items-center">
@@ -105,7 +77,6 @@ export default function CreateServicioForm() {
 
 function SubmitButton() {
     const { pending } = useFormStatus();
-    
     return (
         <Button
             type="submit"

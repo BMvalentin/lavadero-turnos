@@ -3,7 +3,13 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { serializeData } from "@/lib/utils";
-import { uploadImage, deleteImage } from "@/lib/cloudinary";
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export type ActionState = {
   error?: string;
@@ -11,29 +17,58 @@ export type ActionState = {
   data?: any;
 };
 
+function cleanImageUrl(url: string | null): string | null {
+  if (!url || url.trim() === '') return null;
+  let cleaned = url.trim();
+  if (cleaned.includes('public\\') || cleaned.includes('public/')) {
+    cleaned = cleaned.replace(/^.*public[\\\/]/, '/');
+  }
+  if (cleaned.match(/^[A-Za-z]:\\/)) {
+    console.warn('⚠️ Ruta de Windows detectada, no se guardará:', cleaned);
+    return null;
+  }
+  if (!cleaned.startsWith('http') && !cleaned.startsWith('/')) {
+    cleaned = '/' + cleaned;
+  }
+  cleaned = cleaned.replace(/\\/g, '/');
+  return cleaned;
+}
+
+async function uploadToCloudinary(file: File): Promise<string | null> {
+  if (!file || file.size === 0) return null;
+  
+
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  const base64Image = `data:${file.type};base64,${buffer.toString('base64')}`;
+
+  try {
+    const uploadRes = await cloudinary.uploader.upload(base64Image, {
+      folder: "lavadero/servicios",
+    });
+    return uploadRes.secure_url;
+  } catch (error) {
+    console.error("Error subiendo imagen a Cloudinary:", error);
+    throw new Error("No se pudo subir la imagen a Cloudinary");
+  }
+}
+
 export const getServicios = async (): Promise<ActionState> => {
   try {
     const servicio = await prisma.servicio.findMany({
-      where: {
-        estado: true
-      },
+      where: { estado: true },
       include: {
         vehiculo_servicio: {
-          include: {
-            servicio: true
-          }
+          include: { servicio: true }
         }
       },
-      orderBy: {
-        createdAt: 'desc'
-      }
+      orderBy: { createdAt: 'desc' }
     });
 
     return {
       success: true,
       data: serializeData(servicio)
     };
-
   } catch (error) {
     return {
       error: "Error al obtener los servicios",
@@ -42,120 +77,114 @@ export const getServicios = async (): Promise<ActionState> => {
   }
 };
 
-export const createServicio = async (
-  prevState: ActionState,
-  formData: FormData
-): Promise<ActionState> => {
+export const createServicio = async (prevState: ActionState, formData: FormData): Promise<ActionState> => {
   try {
-    const nombre = formData.get("nombre") as string;
-    const estadoValue = formData.get("estado");
-    const file = formData.get("srcImage") as File | null;
+    const nombre = formData.get('nombre') as string;
+    const estadoValue = formData.get('estado');
+    const imageEntry = formData.get('srcImage');
 
-    if (!nombre || nombre.trim() === "") {
-      return { error: "El nombre del servicio es requerido", success: false };
+    if (!nombre || nombre.trim() === '') {
+      return {
+        error: "El nombre del servicio es requerido",
+        success: false
+      };
     }
 
-    let secure_url: string | null = null;
-    let public_id: string | null = null;
+    let finalImageUrl: string | null = null;
 
-    if (file && file.size > 0) {
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const res = await uploadImage(buffer, {
-        folder: "servicios",
-        public_id: nombre.trim().replace(/\s+/g, "-").toLowerCase(),
-        tags: ["servicio", nombre.trim().toLowerCase()],
-      });
-      secure_url = res.secure_url;
-      public_id = res.public_id;
+    if (imageEntry instanceof File && imageEntry.size > 0) {
+      finalImageUrl = await uploadToCloudinary(imageEntry);
+    } 
+    else if (typeof imageEntry === 'string') {
+      finalImageUrl = cleanImageUrl(imageEntry);
     }
 
-    const estado = estadoValue === "true";
-
+    const estado = estadoValue === 'true';
+    
     const nuevoServicio = await prisma.servicio.create({
       data: {
         id: crypto.randomUUID(),
         nombre: nombre.trim(),
-        srcImage: secure_url,
-        cloudinaryPublicId: public_id,
-        estado,
+        srcImage: finalImageUrl,
+        estado: estado,
         createdAt: new Date(),
-        updatedAt: new Date(),
-      },
+        updatedAt: new Date()
+      }
     });
 
-    revalidatePath("/servicio");
-    return { success: true, data: serializeData(nuevoServicio) };
+    revalidatePath('/servicio');
+    return {
+      success: true,
+      data: serializeData(nuevoServicio)
+    };
   } catch (error) {
     return {
-      error: `Error al crear servicio: ${error instanceof Error ? error.message : "Error desconocido"}`,
-      success: false,
+      error: `Error al crear: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+      success: false
     };
   }
 };
 
-export const actualizarServicio = async (
-  prevState: ActionState,
-  formData: FormData
-): Promise<ActionState> => {
+export const actualizarServicio = async (prevState: ActionState, formData: FormData): Promise<ActionState> => {    
   try {
-    const id = formData.get("id") as string;
-    const nombre = formData.get("nombre") as string;
-    const estadoValue = formData.get("estado");
-    const file = formData.get("srcImage") as File | null;
+    const id = formData.get('id') as string;
+    const nombre = formData.get('nombre') as string;
+    const estadoValue = formData.get('estado');
+    const imageEntry = formData.get('srcImage');
 
-    if (!nombre || nombre.trim() === "") {
-      return { error: "El nombre del servicio es requerido", success: false };
+    if (!nombre || nombre.trim() === '') {
+      return {
+        error: "El nombre del servicio es requerido",
+        success: false
+      };
     }
 
-    const servicioExistente = await prisma.servicio.findUnique({
-      where: { id },
+    const existe = await prisma.servicio.findUnique({
+      where: { id }
     });
 
-    if (!servicioExistente) {
-      return { error: "Servicio no encontrado", success: false };
+    if (!existe) {
+      return {
+        error: "Servicio no encontrado",
+        success: false
+      };
     }
 
-    let secure_url = servicioExistente.srcImage;
-    let public_id = servicioExistente.cloudinaryPublicId;
+    let finalImageUrl = existe.srcImage;
 
-    if (file && file.size > 0) {
-      if (servicioExistente.cloudinaryPublicId) {
-        await deleteImage(servicioExistente.cloudinaryPublicId).catch(console.error);
-      }
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const res = await uploadImage(buffer, {
-        folder: "servicios",
-        public_id: nombre.trim().replace(/\s+/g, "-").toLowerCase(),
-        tags: ["servicio", nombre.trim().toLowerCase()],
-      });
-      secure_url = res.secure_url;
-      public_id = res.public_id;
+    if (imageEntry instanceof File && imageEntry.size > 0) {
+      finalImageUrl = await uploadToCloudinary(imageEntry);
+    } 
+    else if (typeof imageEntry === 'string' && imageEntry.trim() !== '') {
+      finalImageUrl = cleanImageUrl(imageEntry);
     }
 
-    const estado = estadoValue === "true";
+    const estado = estadoValue === 'true';
 
     const servicioActualizado = await prisma.servicio.update({
       where: { id },
       data: {
         nombre: nombre.trim(),
-        srcImage: secure_url,
-        cloudinaryPublicId: public_id,
-        estado,
-        updatedAt: new Date(),
-      },
+        srcImage: finalImageUrl,
+        estado: estado,
+        updatedAt: new Date()
+      }
     });
 
-    revalidatePath("/servicio");
-    return { success: true, data: serializeData(servicioActualizado) };
-  } catch (error) {
+    revalidatePath('/servicio');
     return {
-      error: `Error al actualizar: ${error instanceof Error ? error.message : "Error desconocido"}`,
-      success: false,
+      success: true,
+      data: serializeData(servicioActualizado)
+    };
+  } catch (error) {        
+    return {
+      error: `Error al actualizar: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+      success: false
     };
   }
 };
 
-export const deleteservicio = async (prevState: ActionState, formData: FormData): Promise<ActionState> => {
+export const deleteservicio = async (prevState: ActionState, formData: FormData): Promise<ActionState> => {    
   try {
     const id = formData.get('id') as string;
     console.log("ID a eliminar:", id);
@@ -196,8 +225,9 @@ export const deleteservicio = async (prevState: ActionState, formData: FormData)
         updatedAt: new Date()
       }
     });
+    
     revalidatePath('/servicio');
-
+    
     return {
       success: true,
       data: { id }
@@ -214,25 +244,16 @@ export const deleteservicio = async (prevState: ActionState, formData: FormData)
 export const getVehiculosConServicios = async (): Promise<ActionState> => {
   try {
     const vehiculos = await prisma.vehiculo.findMany({
-      where: {
-        estado: true,
-      },
+      where: { estado: true },
       include: {
         vehiculo_servicio: {
-          where: {
-            estado: true,
-          },
-          include: {
-            servicio: true,
-          },
+          where: { estado: true },
+          include: { servicio: true },
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: { createdAt: "desc" },
     });
 
-    // Convertimos Decimal antes de retornar par que nextjs no tenga problemas al serializar los datos de Prisma
     const vehiculosSerializados = serializeData(vehiculos);
 
     return {

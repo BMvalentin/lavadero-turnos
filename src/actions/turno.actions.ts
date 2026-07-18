@@ -532,7 +532,7 @@ export async function deleteTurno(
 
         return {
             success: true,
-            data: { id, whatsappUrl }
+            data: { id, whatsappUrl: whatsappUrl || ""}
         };
     } catch (error) {
         console.error("Error eliminando turno:", error);

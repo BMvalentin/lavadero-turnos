@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useFormState } from "react-dom"; // Cambiado para mayor compatibilidad
+import { useFormState } from "react-dom"; 
 import { deleteTurno, completedTurno } from "@/actions/turno.actions";
 import EditTurnoModal from "./EditarTurnoModal";
 import { Button } from "../ui/button";
 
-const initialState = { success: false, error: undefined, data: undefined };
+const initialState = { 
+    success: false, 
+    error: undefined, 
+    data: { id: "", whatsappUrl: "" } 
+};
 
 export default function TurnoCard({ session, turno }: { session: any; turno: any }) {
     const router = useRouter();
@@ -51,16 +55,12 @@ export default function TurnoCard({ session, turno }: { session: any; turno: any
                     <div className="border-t pt-3 grid grid-cols-2 gap-2">
                         <div>
                             <p className="text-xs text-gray-500 uppercase">Precio Total</p>
-                            <p className="font-bold text-green-600 text-sm">
-                                {formatPrecio(turno.precioCongelado)}
-                            </p>
+                            <p className="font-bold text-green-600 text-sm">{formatPrecio(turno.precioCongelado)}</p>
                         </div>
                         {turno.seniaCongelada > 0 && (
                             <div>
                                 <p className="text-xs text-gray-500 uppercase">Seña</p>
-                                <p className="font-bold text-blue-600 text-sm">
-                                    {formatPrecio(turno.seniaCongelada)}
-                                </p>
+                                <p className="font-bold text-blue-600 text-sm">{formatPrecio(turno.seniaCongelada)}</p>
                             </div>
                         )}
                     </div>
@@ -78,6 +78,24 @@ export default function TurnoCard({ session, turno }: { session: any; turno: any
                                 <input type="hidden" name="id" value={turno.id} />
                                 <Button type="submit" variant="rojo" className="text-sm">Cancelar</Button>
                             </form>
+                        </div>
+                    )}
+
+                    {/* MENSAJE DE CANCELACIÓN EXITOSA */}
+                    {state.success && (
+                        <div className="mt-3 p-3 bg-red-50 border border-red-100 rounded-lg text-center space-y-2">
+                            <p className="text-red-700 text-sm font-medium">✅ Turno cancelado</p>
+                            {state.data?.whatsappUrl && (
+                                <a
+                                    href={state.data.whatsappUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block bg-[#25D366] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-[#128C7E] transition-colors"
+                                >
+                                    Notificar Cancelación por WhatsApp
+                                </a>
+                            )}
+                            <button onClick={() => router.refresh()} className="text-xs text-gray-500 underline block w-full mt-1">Cerrar</button>
                         </div>
                     )}
                 </div>

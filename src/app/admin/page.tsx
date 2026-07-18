@@ -27,11 +27,16 @@ export default async function AdminPage({
         <BotonesLimpieza />
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-5 mb-5">
+      <div className="flex flex-col sm:flex-row justify-between gap-5 mb-5">
         <Buscador />
-        <Link href="/diaLaboral">
-          <Button variant={"celeste"}>Ir a gestion de dia laboral</Button>
-        </Link>
+        <div className="flex gap-3">
+          <Link href="/diaLaboral">
+            <Button variant={"celeste"}>Ir a gestion de dia laboral</Button>
+          </Link>
+          <Link href="/admin/configuracion">
+            <Button variant={"celeste"}>Configuración</Button>
+          </Link>
+        </div>
       </div>
 
       <Suspense key={suspenseKey} fallback={<LoadingOverlay />}>

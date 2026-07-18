@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache";
 import { toZonedTime, fromZonedTime, formatInTimeZone } from "date-fns-tz";
 import { addMinutes } from "date-fns";
 import { serializeData } from "@/lib/utils";
-import { enviarCorreoCreacionTurno, enviarCorreoModificacionTurno, enviarCorreoCancelacionTurno } from "@/lib/mail";
+import { enviarCorreoCreacionTurno, enviarCorreoModificacionTurno, enviarCorreoCancelacionTurno, TurnoDetails } from "@/lib/mail";
+import { obtenerConfiguracion } from "./configuracion.actions";
 
 const TIMEZONE = process.env.TIMEZONE || "America/Argentina/Buenos_Aires";
 
@@ -14,6 +15,20 @@ export type ActionState = {
     success?: boolean;
     data?: any;
 };
+
+async function getWhatsAppUrl(tipo: "solicitar" | "modificar" | "cancelar", detalles: TurnoDetails) {
+    const ownerNumber = await obtenerConfiguracion("WHATSAPP_OWNER_NUMBER");
+    if (!ownerNumber) return null;
+
+    const texto = `Hola, acabo de ${tipo} un turno.
+*Detalle del turno:*
+- Cliente: ${detalles.cliente}
+- Servicio: ${detalles.servicio}
+- Fecha: ${detalles.fecha}
+- Vehículo: ${detalles.vehiculo}`;
+
+    return `https://wa.me/${ownerNumber}?text=${encodeURIComponent(texto)}`;
+}
 
 // Auxiliares zonificados
 function getMinutesFromZonedDate(date: Date): number {
@@ -65,7 +80,7 @@ export async function createTurno(
         const fechaSoloString = horarioReservadoStr.split('T')[0]; // "2026-01-31"
         const inicioDia = fromZonedTime(`${fechaSoloString} 00:00:00`, TIMEZONE);
         const finDia = fromZonedTime(`${fechaSoloString} 23:59:59`, TIMEZONE);
-        
+
         const diaSemanaIndex = toZonedTime(fechaSolicitadaInicio, TIMEZONE).getDay();
 
         const [diaLaboralConfig, excepciones, turnosDelDia] = await Promise.all([
@@ -124,19 +139,20 @@ export async function createTurno(
                 vehiculoServicioId,
                 userId,
                 horarioReservado: fechaSolicitadaInicio,
-                precioCongelado: vehiculoServicio.precio, 
+                precioCongelado: vehiculoServicio.precio,
                 seniaCongelada: vehiculoServicio.senia,
                 patente: patente.toUpperCase(),
                 estado: 1,
-                // CAMPOS OBLIGATORIOS
                 createdAt: ahoraUTC,
-                updatedAt: ahoraUTC, 
+                updatedAt: ahoraUTC,
             }
         });
 
-        // Notificación por correo
+        let whatsappUrl: string | null = null;
+        let turnoDetalles: TurnoDetails | null = null;
+
         try {
-            const turnoParaCorreo = await prisma.turno.findUnique({
+            const turnoCompleto = await prisma.turno.findUnique({
                 where: { id: nuevoTurno.id },
                 include: {
                     user: true,
@@ -146,21 +162,40 @@ export async function createTurno(
                 }
             });
 
-            if (turnoParaCorreo && turnoParaCorreo.user.email) {
-                await enviarCorreoCreacionTurno(turnoParaCorreo.user.email, {
-                    cliente: turnoParaCorreo.user.name || turnoParaCorreo.user.email,
-                    fecha: formatInTimeZone(turnoParaCorreo.horarioReservado, TIMEZONE, "dd/MM/yyyy HH:mm"),
-                    vehiculo: turnoParaCorreo.vehiculo_servicio.vehiculo.nombre || "Vehículo",
-                    servicio: turnoParaCorreo.vehiculo_servicio.servicio.nombre || "Servicio",
-                    precio: Number(turnoParaCorreo.precioCongelado)
-                });
+            if (turnoCompleto) {
+                turnoDetalles = {
+                    cliente: turnoCompleto.user.name || turnoCompleto.user.email || "Cliente",
+                    fecha: formatInTimeZone(turnoCompleto.horarioReservado, TIMEZONE, "dd/MM/yyyy HH:mm"),
+                    vehiculo: turnoCompleto.vehiculo_servicio.vehiculo.nombre || "Vehículo",
+                    servicio: turnoCompleto.vehiculo_servicio.servicio.nombre || "Servicio",
+                    precio: Number(turnoCompleto.precioCongelado)
+                };
+
+                // Correo: solo si el cliente tiene email cargado (esto sí es opcional)
+                if (turnoCompleto.user.email) {
+                    try {
+                        await enviarCorreoCreacionTurno(turnoCompleto.user.email, turnoDetalles);
+                    } catch (mailError) {
+                        console.error("[MAIL] Error al enviar correo de creación:", mailError);
+                    }
+                }
             }
-        } catch (mailError) {
-            console.error("Error al enviar correo de creación:", mailError);
+        } catch (fetchError) {
+            console.error("[TURNO] Error al obtener detalles del turno recién creado:", fetchError);
         }
 
-        revalidatePath("/turno");
-        return { success: true, data: { id: nuevoTurno.id } };
+        try {
+            if (turnoDetalles) {
+                whatsappUrl = await getWhatsAppUrl("solicitar", turnoDetalles);
+                console.log("[WPP] URL generada:", whatsappUrl);
+            } else {
+                console.warn("[WPP] No se pudieron obtener los detalles del turno para WhatsApp");
+            }
+        } catch (wppError) {
+            console.error("[WPP] Error al generar URL de WhatsApp:", wppError);
+        }
+
+        return { success: true, data: { id: nuevoTurno.id, whatsappUrl } };
 
     } catch (error) {
         console.error(error);
@@ -172,7 +207,7 @@ export async function getTurnos(params?: { userId?: string; fecha?: string }): P
     try {
         let where: any = { estado: 1 };
         if (params?.userId) where.userId = params.userId;
-        
+
         if (params?.fecha) {
             // fecha viene como "YYYY-MM-DD"
             const inicio = fromZonedTime(`${params.fecha} 00:00:00`, TIMEZONE);
@@ -230,8 +265,8 @@ export async function actualizarTurno(
 
         // 2. Manejo de fecha con Zona Horaria
         // Si viene un string nuevo, lo interpretamos como Argentina. Si no, mantenemos el Date de la DB.
-        const fechaSolicitadaInicio = horarioReservadoStr 
-            ? fromZonedTime(horarioReservadoStr, TIMEZONE) 
+        const fechaSolicitadaInicio = horarioReservadoStr
+            ? fromZonedTime(horarioReservadoStr, TIMEZONE)
             : turnoActual.horarioReservado;
 
         const duracion = turnoActual.vehiculo_servicio.duracion;
@@ -322,19 +357,33 @@ export async function actualizarTurno(
             }
         });
 
+        let whatsappUrl = null;
+        let detallesModificacion = null;
+
         // Notificación por correo
         try {
             if (turnoActualizado.user.email) {
-                await enviarCorreoModificacionTurno(turnoActualizado.user.email, {
+                detallesModificacion = {
                     cliente: turnoActualizado.user.name || turnoActualizado.user.email,
                     fecha: formatInTimeZone(turnoActualizado.horarioReservado, TIMEZONE, "dd/MM/yyyy HH:mm"),
                     vehiculo: turnoActualizado.vehiculo_servicio.vehiculo.nombre || "Vehículo",
                     servicio: turnoActualizado.vehiculo_servicio.servicio.nombre || "Servicio",
                     precio: Number(turnoActualizado.precioCongelado)
-                });
+                };
+                await enviarCorreoModificacionTurno(turnoActualizado.user.email, detallesModificacion);
             }
         } catch (mailError) {
-            console.error("Error al enviar correo de modificación:", mailError);
+            console.error("[WPP] Error al enviar correo de modificación:", mailError);
+        }
+
+        // Generación del link de WhatsApp (independiente del correo)
+        try {
+            if (detallesModificacion) {
+                whatsappUrl = await getWhatsAppUrl("modificar", detallesModificacion);
+                console.log("[WPP] URL de modificación generada:", whatsappUrl);
+            }
+        } catch (wppError) {
+            console.error("[WPP] Error al generar URL de WhatsApp (modificar):", wppError);
         }
 
         revalidatePath("/turno");
@@ -344,6 +393,7 @@ export async function actualizarTurno(
             success: true,
             data: {
                 ...turnoActualizado,
+                whatsappUrl,
                 precioCongelado: Number(turnoActualizado.precioCongelado),
                 seniaCongelada: Number(turnoActualizado.seniaCongelada),
                 vehiculo_servicio: {
@@ -383,10 +433,10 @@ export async function obtenerDatosParaTurno(): Promise<ActionState> {
                 ]
             }),
             prisma.user.findMany({
-                select: { 
-                    id: true, 
-                    name: true, 
-                    email: true 
+                select: {
+                    id: true,
+                    name: true,
+                    email: true
                 },
                 orderBy: { name: 'asc' }
             })
@@ -402,9 +452,9 @@ export async function obtenerDatosParaTurno(): Promise<ActionState> {
 
         return {
             success: true,
-            data: { 
+            data: {
                 configuraciones: configuracionesPlanas,
-                usuarios 
+                usuarios
             }
         };
     } catch (error) {
@@ -420,7 +470,7 @@ export async function deleteTurno(
     prevState: ActionState,
     formData: FormData
 ): Promise<ActionState> {
-    
+
     try {
         const id = formData.get("id") as string;
 
@@ -447,36 +497,42 @@ export async function deleteTurno(
             };
         }
 
-        // Realizamos el borrado lógico (estado: 0)
         await prisma.turno.update({
             where: { id },
             data: {
                 estado: 0,
-                updatedAt: new Date() // Satisfacemos el campo obligatorio
+                updatedAt: new Date()
             }
         });
 
-        // Notificación por correo
-        try {
-            if (existe.user.email) {
-                await enviarCorreoCancelacionTurno(existe.user.email, {
-                    cliente: existe.user.name || existe.user.email,
-                    fecha: formatInTimeZone(existe.horarioReservado, TIMEZONE, "dd/MM/yyyy HH:mm"),
-                    vehiculo: existe.vehiculo_servicio.vehiculo.nombre || "Vehículo",
-                    servicio: existe.vehiculo_servicio.servicio.nombre || "Servicio",
-                    precio: Number(existe.precioCongelado)
-                });
+        let whatsappUrl: string | null = null;
+        let detallesCancelacion: TurnoDetails = {
+            cliente: existe.user.name || existe.user.email || "Cliente",
+            fecha: formatInTimeZone(existe.horarioReservado, TIMEZONE, "dd/MM/yyyy HH:mm"),
+            vehiculo: existe.vehiculo_servicio.vehiculo.nombre || "Vehículo",
+            servicio: existe.vehiculo_servicio.servicio.nombre || "Servicio",
+            precio: Number(existe.precioCongelado)
+        };
+
+        if (existe.user.email) {
+            try {
+                await enviarCorreoCancelacionTurno(existe.user.email, detallesCancelacion);
+            } catch (mailError) {
+                console.error("[MAIL] Error al enviar correo de cancelación:", mailError);
             }
-        } catch (mailError) {
-            console.error("Error al enviar correo de cancelación:", mailError);
         }
 
-        // Revalidamos la ruta para que la lista de turnos se actualice al instante
-        revalidatePath("/turno");
+        // ── WhatsApp: se genera siempre, independiente del correo ──
+        try {
+            whatsappUrl = await getWhatsAppUrl("cancelar", detallesCancelacion);
+            console.log("[WPP] URL de cancelación generada:", whatsappUrl);
+        } catch (wppError) {
+            console.error("[WPP] Error al generar URL de WhatsApp (cancelar):", wppError);
+        }
 
         return {
             success: true,
-            data: { id }
+            data: { id, whatsappUrl }
         };
     } catch (error) {
         console.error("Error eliminando turno:", error);
@@ -491,7 +547,7 @@ export async function completedTurno(
     prevState: ActionState,
     formData: FormData
 ): Promise<ActionState> {
-    
+
     try {
         const id = formData.get("id") as string;
 

@@ -4,6 +4,7 @@ import { createTurno, obtenerDatosParaTurno } from "@/actions/turno.actions";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import SeleccionadorHorario from "./SeleccionadorHorario";
 import { Button } from "../ui/button";
 
@@ -43,6 +44,7 @@ function SubmitButton() {
 }
 
 export default function CreateTurnoForm({ session }: { session: any }) {
+    const router = useRouter();
     const [state, formAction] = useActionState(createTurno, initialState);
     const formRef = useRef<HTMLFormElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -59,6 +61,7 @@ export default function CreateTurnoForm({ session }: { session: any }) {
         session.user.role === "USER" ? { id: session.user.id, name: session.user.name, email: session.user.email } : null
     );
     const [whatsappLink, setWhatsappLink] = useState<string | null>(null);
+    const [showSuccessBanner, setShowSuccessBanner] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -98,14 +101,19 @@ export default function CreateTurnoForm({ session }: { session: any }) {
             if (state.data?.whatsappUrl) {
                 setWhatsappLink(state.data.whatsappUrl);
             }
-            alert("✅ Turno creado correctamente");
+            setShowSuccessBanner(true);
             formRef.current?.reset();
             setSelectedConfigId("");
             if (session.user.role === "ADMIN") {
                 setSelectedUser(null);
                 setSearchTerm("");
             }
+            // El turno ya se creó y quedó guardado; refrescamos de una para que
+            // cualquier lista/calendario en esta misma página (o al volver a ella)
+            // ya lo muestre, sin necesidad de que el usuario recargue a mano.
+            router.refresh();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state, session.user.role]);
 
     if (loadingData) return <div className="p-8 text-center text-gray-500">Cargando datos del sistema...</div>;
@@ -114,20 +122,33 @@ export default function CreateTurnoForm({ session }: { session: any }) {
         <div className="bg-white rounded-xl shadow-sm border p-6 max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Nuevo Turno</h2>
 
-            {whatsappLink && (
+            {showSuccessBanner && (
                 <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex flex-col items-center gap-3">
                     <p className="text-green-800 font-medium text-center">
-                        ¡Reserva guardada! Haz clic en el siguiente botón para notificar al local por WhatsApp.
+                        ✅ Turno creado correctamente.
+                        {whatsappLink && " Notificá al lavadero por WhatsApp si querés:"}
                     </p>
-                    <a
-                        href={whatsappLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => setWhatsappLink(null)}
-                        className="inline-flex items-center justify-center bg-[#25D366] text-white px-6 py-2.5 rounded-lg font-bold hover:bg-[#128C7E] transition-colors shadow-sm"
+                    {whatsappLink && (
+                        <a
+                            href={whatsappLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setWhatsappLink(null)}
+                            className="inline-flex items-center justify-center bg-[#25D366] text-white px-6 py-2.5 rounded-lg font-bold hover:bg-[#128C7E] transition-colors shadow-sm"
+                        >
+                            Enviar a WhatsApp
+                        </a>
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setShowSuccessBanner(false);
+                            setWhatsappLink(null);
+                        }}
+                        className="text-xs text-green-700/70 hover:text-green-800 underline"
                     >
-                        Enviar a WhatsApp
-                    </a>
+                        Cerrar
+                    </button>
                 </div>
             )}
 

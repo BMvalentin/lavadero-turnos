@@ -3,6 +3,7 @@
 import { deleteTurno, completedTurno } from "@/actions/turno.actions";
 import { useActionState } from "react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import EditTurnoModal from "./EditarTurnoModal";
 import { Button } from "../ui/button";
 import { useMemo } from "react";
@@ -57,7 +58,6 @@ export default function TurnoList({ session, turnos }: { session: any; turnos: T
   const { turnosHoy, turnosRestantes } = useMemo(() => {
     const hoy = new Date().toDateString();
 
-    // 1. Separamos los de hoy del resto
     const hoyList: Turno[] = [];
     const restoList: Turno[] = [];
 
@@ -70,12 +70,10 @@ export default function TurnoList({ session, turnos }: { session: any; turnos: T
       }
     });
 
-    // 2. Ordenamos: Hoy (del más temprano al más tarde para trabajar mejor)
     hoyList.sort((a, b) =>
       new Date(a.horarioReservado).getTime() - new Date(b.horarioReservado).getTime()
     );
 
-    // 3. Ordenamos: Resto (del más nuevo al más viejo, como pediste)
     restoList.sort((a, b) =>
       new Date(b.horarioReservado).getTime() - new Date(a.horarioReservado).getTime()
     );
@@ -136,6 +134,7 @@ export default function TurnoList({ session, turnos }: { session: any; turnos: T
 }
 
 function TurnoCard({ session, turno }: { session: any; turno: Turno }) {
+  const router = useRouter();
   const [state, formAction] = useActionState(deleteTurno, initialState);
   const [stateComplete, formActionComplete] = useActionState(completedTurno, initialStateComplete);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -221,57 +220,59 @@ function TurnoCard({ session, turno }: { session: any; turno: Turno }) {
             )}
           </div>
 
-          {/* Acciones */}
-          <div className="flex gap-2 pt-3">
-            {(session?.user.role === "ADMIN" && isPasado) &&
-              <form className="w-full flex flex-wrap" action={formActionComplete}>
-                <input type="hidden" name="id" value={turno.id} />
+          {/* Acciones — se ocultan mientras se muestra el resultado, para no confundir */}
+          {!state.success && !stateComplete.success && (
+            <div className="flex gap-2 pt-3">
+              {(session?.user.role === "ADMIN" && isPasado) &&
+                <form className="w-full flex flex-wrap" action={formActionComplete}>
+                  <input type="hidden" name="id" value={turno.id} />
 
+                  <Button
+                    onClick={(e) => {
+                      if (!confirm('¿Estás seguro de completar este turno?')) {
+                        e.preventDefault();
+                      }
+                    }}
+                    type="submit"
+                    variant={"verde"}
+                    className="flex-1 py-2 rounded text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    Completar
+                  </Button></form>}
+              {(session?.user.role === "ADMIN" && !isPasado) &&
                 <Button
+                  onClick={() => setShowEditModal(true)}
+                  variant={"celeste"}
+                  className="flex-1 py-2 rounded text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  Editar
+                </Button>}
+              {session?.user.role !== "ADMIN" && <Button
+                onClick={isPasado ? () => { } : () => setShowEditModal(true)}
+                variant={isPasado ? "ghost" : "celeste"}
+                disabled={isPasado}
+                className="flex-1 py-2 rounded text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {isPasado ? "Fecha pasada por gestionar" : "Editar"}
+              </Button>}
+
+              <form action={formAction}>
+                <input type="hidden" name="id" value={turno.id} />
+                <Button
+                  type="submit"
+                  variant={"rojo"}
                   onClick={(e) => {
-                    if (!confirm('¿Estás seguro de completar este turno?')) {
+                    if (!confirm('¿Estás seguro de cancelar este turno?')) {
                       e.preventDefault();
                     }
                   }}
-                  type="submit"
-                  variant={"verde"}
-                  className="flex-1 py-2 rounded text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="px-4 py-2text-sm font-medium"
                 >
-                  Completar
-                </Button></form>}
-            {(session?.user.role === "ADMIN" && !isPasado) &&
-              <Button
-                onClick={() => setShowEditModal(true)}
-                variant={"celeste"}
-                className="flex-1 py-2 rounded text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                Editar
-              </Button>}
-            {session?.user.role !== "ADMIN" && <Button
-              onClick={isPasado ? () => { } : () => setShowEditModal(true)}
-              variant={isPasado ? "ghost" : "celeste"}
-              disabled={isPasado}
-              className="flex-1 py-2 rounded text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              {isPasado ? "Fecha pasada por gestionar" : "Editar"}
-            </Button>}
-
-            <form action={formAction}>
-              <input type="hidden" name="id" value={turno.id} />
-              <Button
-                type="submit"
-                variant={"rojo"}
-                onClick={(e) => {
-                  if (!confirm('¿Estás seguro de cancelar este turno?')) {
-                    e.preventDefault();
-                  }
-                }}
-                className="px-4 py-2text-sm font-medium"
-              >
-                Cancelar
-              </Button>
-            </form>
-          </div>
+                  Cancelar
+                </Button>
+              </form>
+            </div>
+          )}
 
           {state.error && (
             <p className="text-red-600 text-xs mt-2">{state.error}</p>
@@ -289,15 +290,29 @@ function TurnoCard({ session, turno }: { session: any; turno: Turno }) {
                   Notificar Cancelación
                 </a>
               )}
+              <button
+                type="button"
+                onClick={() => router.refresh()}
+                className="text-xs text-gray-500 hover:text-gray-700 underline"
+              >
+                Listo, cerrar
+              </button>
             </div>
           )}
           {stateComplete.error && (
             <p className="text-red-600 text-xs mt-2">{stateComplete.error}</p>
           )}
           {stateComplete.success && (
-            <p className="text-green-600 text-xs mt-2">
-              ✅ Turno completado
-            </p>
+            <div className="mt-3 p-3 bg-green-50 border border-green-100 rounded-lg text-center space-y-2">
+              <p className="text-green-700 text-sm font-medium">✅ Turno completado</p>
+              <button
+                type="button"
+                onClick={() => router.refresh()}
+                className="text-xs text-gray-500 hover:text-gray-700 underline"
+              >
+                Listo, cerrar
+              </button>
+            </div>
           )}
         </div>
       </div>

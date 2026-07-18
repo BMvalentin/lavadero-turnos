@@ -143,18 +143,16 @@ export async function createTurno(
                 seniaCongelada: vehiculoServicio.senia,
                 patente: patente.toUpperCase(),
                 estado: 1,
-                // CAMPOS OBLIGATORIOS
                 createdAt: ahoraUTC,
                 updatedAt: ahoraUTC,
             }
         });
 
-        let whatsappUrl = null;
-        let turnoDetalles = null;
+        let whatsappUrl: string | null = null;
+        let turnoDetalles: TurnoDetails | null = null;
 
-        // Notificación por correo
         try {
-            const turnoParaCorreo = await prisma.turno.findUnique({
+            const turnoCompleto = await prisma.turno.findUnique({
                 where: { id: nuevoTurno.id },
                 include: {
                     user: true,
@@ -164,21 +162,28 @@ export async function createTurno(
                 }
             });
 
-            if (turnoParaCorreo && turnoParaCorreo.user.email) {
+            if (turnoCompleto) {
                 turnoDetalles = {
-                    cliente: turnoParaCorreo.user.name || turnoParaCorreo.user.email,
-                    fecha: formatInTimeZone(turnoParaCorreo.horarioReservado, TIMEZONE, "dd/MM/yyyy HH:mm"),
-                    vehiculo: turnoParaCorreo.vehiculo_servicio.vehiculo.nombre || "Vehículo",
-                    servicio: turnoParaCorreo.vehiculo_servicio.servicio.nombre || "Servicio",
-                    precio: Number(turnoParaCorreo.precioCongelado)
+                    cliente: turnoCompleto.user.name || turnoCompleto.user.email || "Cliente",
+                    fecha: formatInTimeZone(turnoCompleto.horarioReservado, TIMEZONE, "dd/MM/yyyy HH:mm"),
+                    vehiculo: turnoCompleto.vehiculo_servicio.vehiculo.nombre || "Vehículo",
+                    servicio: turnoCompleto.vehiculo_servicio.servicio.nombre || "Servicio",
+                    precio: Number(turnoCompleto.precioCongelado)
                 };
-                await enviarCorreoCreacionTurno(turnoParaCorreo.user.email, turnoDetalles);
+
+                // Correo: solo si el cliente tiene email cargado (esto sí es opcional)
+                if (turnoCompleto.user.email) {
+                    try {
+                        await enviarCorreoCreacionTurno(turnoCompleto.user.email, turnoDetalles);
+                    } catch (mailError) {
+                        console.error("[MAIL] Error al enviar correo de creación:", mailError);
+                    }
+                }
             }
-        } catch (mailError) {
-            console.error("[WPP] Error al enviar correo de creación:", mailError);
+        } catch (fetchError) {
+            console.error("[TURNO] Error al obtener detalles del turno recién creado:", fetchError);
         }
 
-        // Generación del link de WhatsApp (independiente del correo)
         try {
             if (turnoDetalles) {
                 whatsappUrl = await getWhatsAppUrl("solicitar", turnoDetalles);
@@ -190,7 +195,6 @@ export async function createTurno(
             console.error("[WPP] Error al generar URL de WhatsApp:", wppError);
         }
 
-        revalidatePath("/turno");
         return { success: true, data: { id: nuevoTurno.id, whatsappUrl } };
 
     } catch (error) {
@@ -493,48 +497,38 @@ export async function deleteTurno(
             };
         }
 
-        // Realizamos el borrado lógico (estado: 0)
         await prisma.turno.update({
             where: { id },
             data: {
                 estado: 0,
-                updatedAt: new Date() // Satisfacemos el campo obligatorio
+                updatedAt: new Date()
             }
         });
 
-        let whatsappUrl = null;
-        let detallesCancelacion = null;
+        let whatsappUrl: string | null = null;
+        let detallesCancelacion: TurnoDetails = {
+            cliente: existe.user.name || existe.user.email || "Cliente",
+            fecha: formatInTimeZone(existe.horarioReservado, TIMEZONE, "dd/MM/yyyy HH:mm"),
+            vehiculo: existe.vehiculo_servicio.vehiculo.nombre || "Vehículo",
+            servicio: existe.vehiculo_servicio.servicio.nombre || "Servicio",
+            precio: Number(existe.precioCongelado)
+        };
 
-        // Notificación por correo
-        try {
-            if (existe.user.email) {
-                detallesCancelacion = {
-                    cliente: existe.user.name || existe.user.email,
-                    fecha: formatInTimeZone(existe.horarioReservado, TIMEZONE, "dd/MM/yyyy HH:mm"),
-                    vehiculo: existe.vehiculo_servicio.vehiculo.nombre || "Vehículo",
-                    servicio: existe.vehiculo_servicio.servicio.nombre || "Servicio",
-                    precio: Number(existe.precioCongelado)
-                };
+        if (existe.user.email) {
+            try {
                 await enviarCorreoCancelacionTurno(existe.user.email, detallesCancelacion);
+            } catch (mailError) {
+                console.error("[MAIL] Error al enviar correo de cancelación:", mailError);
             }
-        } catch (mailError) {
-            console.error("[WPP] Error al enviar correo de cancelación:", mailError);
         }
 
-        // Generación del link de WhatsApp (independiente del correo)
+        // ── WhatsApp: se genera siempre, independiente del correo ──
         try {
-            if (detallesCancelacion) {
-                whatsappUrl = await getWhatsAppUrl("cancelar", detallesCancelacion);
-                console.log("[WPP] URL de cancelación generada:", whatsappUrl);
-            } else {
-                console.warn("[WPP] No hay detalles de cancelación para generar WhatsApp");
-            }
+            whatsappUrl = await getWhatsAppUrl("cancelar", detallesCancelacion);
+            console.log("[WPP] URL de cancelación generada:", whatsappUrl);
         } catch (wppError) {
             console.error("[WPP] Error al generar URL de WhatsApp (cancelar):", wppError);
         }
-
-        // Revalidamos la ruta para que la lista de turnos se actualice al instante
-        revalidatePath("/turno");
 
         return {
             success: true,

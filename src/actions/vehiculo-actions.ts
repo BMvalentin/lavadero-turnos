@@ -121,12 +121,7 @@ export const actualizarVehiculo = async (
 
     // Si se sube una nueva imagen:
     if (file && file.size > 0) {
-      // 1. Eliminar imagen anterior de Cloudinary si existía
-      if (vehiculoExistente.cloudinaryPublicId) {
-        await deleteImage(vehiculoExistente.cloudinaryPublicId).catch(console.error);
-      }
-
-      // 2. Subir la nueva
+      // 1. Subir la nueva
       const buffer = Buffer.from(await file.arrayBuffer());
       const res = await uploadImage(buffer, {
         folder: "vehiculos",
@@ -135,6 +130,14 @@ export const actualizarVehiculo = async (
       });
       secure_url = res.secure_url;
       public_id = res.public_id;
+
+      // 2. Eliminar la imagen anterior sólo si la subida fue exitosa y es distinta
+      if (
+        vehiculoExistente.cloudinaryPublicId &&
+        vehiculoExistente.cloudinaryPublicId !== public_id
+      ) {
+        await deleteImage(vehiculoExistente.cloudinaryPublicId).catch(console.error);
+      }
     }
 
     const estado = estadoValue === "true";

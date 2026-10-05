@@ -1,11 +1,36 @@
 // lib/cloudinary.ts
 import { v2 as cloudinary } from "cloudinary";
 
+const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+const apiKey = process.env.CLOUDINARY_API_KEY;
+const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+// La configuración de Cloudinary es server-side: api_key y api_secret
+// nunca deben exponerse al navegador.
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: cloudName,
+  api_key: apiKey,
+  api_secret: apiSecret,
 });
+
+function assertCloudinaryConfig(): void {
+  const missing: string[] = [];
+  if (!cloudName) missing.push("NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME");
+  if (!apiKey) missing.push("CLOUDINARY_API_KEY");
+  if (!apiSecret) missing.push("CLOUDINARY_API_SECRET");
+
+  if (missing.length === 0) return;
+
+  // Log seguro: sólo nombres de variables, nunca valores ni secretos.
+  console.error(
+    `[cloudinary] Configuración incompleta. Faltan variables de entorno: ${missing.join(", ")}`
+  );
+
+  if (!cloudName) {
+    throw new Error("Falta configurar NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME.");
+  }
+  throw new Error("La configuración de Cloudinary está incompleta.");
+}
 
 interface UploadOptions {
   folder: string;
@@ -17,6 +42,7 @@ export async function uploadImage(
   fileBuffer: Buffer,
   options: UploadOptions
 ): Promise<{ secure_url: string; public_id: string }> {
+  assertCloudinaryConfig();
   // No necesitamos sharp: la transformación se hace en la subida
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
@@ -52,5 +78,6 @@ export async function uploadImage(
 }
 
 export async function deleteImage(publicId: string): Promise<void> {
+  assertCloudinaryConfig();
   await cloudinary.uploader.destroy(publicId);
 }

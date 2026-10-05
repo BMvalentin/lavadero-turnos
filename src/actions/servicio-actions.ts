@@ -119,9 +119,6 @@ export const actualizarServicio = async (
     let public_id = servicioExistente.cloudinaryPublicId;
 
     if (file && file.size > 0) {
-      if (servicioExistente.cloudinaryPublicId) {
-        await deleteImage(servicioExistente.cloudinaryPublicId).catch(console.error);
-      }
       const buffer = Buffer.from(await file.arrayBuffer());
       const res = await uploadImage(buffer, {
         folder: "servicios",
@@ -130,6 +127,14 @@ export const actualizarServicio = async (
       });
       secure_url = res.secure_url;
       public_id = res.public_id;
+
+      // Borrar la imagen anterior sólo si la subida fue exitosa y es distinta.
+      if (
+        servicioExistente.cloudinaryPublicId &&
+        servicioExistente.cloudinaryPublicId !== public_id
+      ) {
+        await deleteImage(servicioExistente.cloudinaryPublicId).catch(console.error);
+      }
     }
 
     const estado = estadoValue === "true";

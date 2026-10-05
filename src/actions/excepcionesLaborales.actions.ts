@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { esAdmin } from "@/lib/esAdmin";
 
 export type ActionState = {
     error?: string;
@@ -9,10 +10,14 @@ export type ActionState = {
     data?: any;
 };
 
+const NO_AUTORIZADO: ActionState = { error: "No autorizado", success: false };
+
 export async function create(
     prevState: ActionState,
     formData: FormData
 ): Promise<ActionState> {
+    if (!(await esAdmin())) return NO_AUTORIZADO;
+
     try {
         const excepcion = await prisma.expeciones_laborales.create({
             data: {
@@ -26,7 +31,7 @@ export async function create(
             }
         });
 
-        revalidatePath("/excepciones");
+        revalidatePath("/admin/configuracion/feriados");
         return {
             success: true,
             data: excepcion
@@ -41,6 +46,8 @@ export async function create(
 }
 
 export async function getExcepciones(): Promise<ActionState> {
+    if (!(await esAdmin())) return NO_AUTORIZADO;
+
     try {
         const excepciones = await prisma.expeciones_laborales.findMany({
             orderBy: {
@@ -65,6 +72,8 @@ export async function update(
     prevState: ActionState,
     formData: FormData
 ): Promise<ActionState> {
+    if (!(await esAdmin())) return NO_AUTORIZADO;
+
     try {
         const id = formData.get("id") as string;
 
@@ -78,7 +87,7 @@ export async function update(
             }
         });
 
-        revalidatePath("/excepciones");
+        revalidatePath("/admin/configuracion/feriados");
         return {
             success: true,
             data: excepcion};
@@ -93,6 +102,8 @@ export async function update(
 
 // cambiar estado a false en lugar de eliminar
 export async function softDeleteExcepcion(id: string): Promise<ActionState> {
+    if (!(await esAdmin())) return NO_AUTORIZADO;
+
     try {
        
         const excepcion = await prisma.expeciones_laborales.update({
@@ -103,7 +114,7 @@ export async function softDeleteExcepcion(id: string): Promise<ActionState> {
             }
         });
 
-        revalidatePath("/excepciones");
+        revalidatePath("/admin/configuracion/feriados");
         return {
             success: true,
             data: excepcion
@@ -118,6 +129,8 @@ export async function softDeleteExcepcion(id: string): Promise<ActionState> {
 }
 
 export async function deleteExcepcion(id: string): Promise<ActionState> {
+    if (!(await esAdmin())) return NO_AUTORIZADO;
+
     try {
         if (!id) {
             return {
@@ -130,7 +143,7 @@ export async function deleteExcepcion(id: string): Promise<ActionState> {
             where: { id }
         });
 
-        revalidatePath("/excepcionesLaborales");
+        revalidatePath("/admin/configuracion/feriados");
         return {
             success: true,
             data: { id }

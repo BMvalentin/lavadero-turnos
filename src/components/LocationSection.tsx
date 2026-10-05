@@ -3,9 +3,12 @@ import { motion } from "framer-motion";
 import { MapPin, Phone, Clock } from "lucide-react";
 import { useState, useEffect, use } from "react";
 import { getHorariosCompactos } from "@/actions/margenesHorario.actions";
+import { useSiteConfig } from "@/components/providers/SiteConfigProvider";
+import { mapaEmbedUrl } from "@/lib/siteConfig";
 
 
 export function LocationSection() {
+  const config = useSiteConfig();
   const [cargando,setCargando] = useState(true);
   const [horarios,setHorarios] = useState(["Cargando..."]);
   useEffect(() => {
@@ -55,7 +58,7 @@ export function LocationSection() {
               </div>
               <div>
                 <h3 className="font-semibold text-foreground mb-1">Dirección</h3>
-                <p className="text-muted-foreground">Av. Montreal 1118, Santa Clara del Mar</p>
+                <p className="text-muted-foreground">{config.DIRECCION}</p>
               </div>
             </div>
 
@@ -65,7 +68,7 @@ export function LocationSection() {
               </div>
               <div>
                 <h3 className="font-semibold text-foreground mb-1">Teléfono</h3>
-                <p className="text-muted-foreground">+54 2234 39-8429</p>
+                <p className="text-muted-foreground">{config.TELEFONO}</p>
               </div>
             </div>
 
@@ -96,13 +99,13 @@ export function LocationSection() {
             className="rounded-xl overflow-hidden border border-celeste/20 h-[400px] bg-white  shadow-2xl"
           >
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1575.654469426551!2d-57.51808311571055!3d-37.82965279424021!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9584d17d73960711%3A0x2e3eb03a5f14c0d!2sAv.%20Montreal%201118%2C%20B7609%20Santa%20Clara%20del%20Mar%2C%20Provincia%20de%20Buenos%20Aires!5e0!3m2!1ses-419!2sar!4v1769111646685!5m2!1ses-419!2sar"
+              src={mapaEmbedUrl(config.DIRECCION)}
               width="600" 
               height="450" 
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title="Ubicación AutoShine"
+              title={`Ubicación ${config.NOMBRE_EMPRESA}`}
             />
           </motion.div>
         </div>

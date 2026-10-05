@@ -6,6 +6,8 @@ import { DoorOpen, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { handleSignOut } from "@/actions/auth-actions";
 import Image from "next/image";
+import { useSiteConfig } from "@/components/providers/SiteConfigProvider";
+import { splitNombreEmpresa } from "@/lib/siteConfig";
 
 interface HeaderProps {
   session: any;
@@ -17,6 +19,8 @@ export function Header({ session }: HeaderProps) {
   const role = session?.user?.role;
   const image = session?.user?.image || "/images/avatar-default.svg";
   const name = session?.user?.name || "Usuario";
+  const { NOMBRE_EMPRESA, LOGO_URL } = useSiteConfig();
+  const [nombreInicio, nombreFin] = splitNombreEmpresa(NOMBRE_EMPRESA);
 
   return (
     <>
@@ -29,9 +33,9 @@ export function Header({ session }: HeaderProps) {
         <div className="container flex items-center justify-between h-16 mx-auto px-4 select-none">
           
           <Link href="/#home" className="flex items-center gap-2">
-            <Image src="/images/logopng.png" alt="" width={'64'} height={'64'}/>
+            <Image src={LOGO_URL} alt={`Logo ${NOMBRE_EMPRESA}`} width={64} height={64} className="h-12 w-auto max-w-16 object-contain"/>
             <span className="block sm:hidden lg:block text-xl font-semibold text-foreground">
-              Chapa{" "}<span className="text-primary">Detail</span>
+              {nombreInicio}{nombreInicio && " "}<span className="text-primary">{nombreFin}</span>
             </span>
           </Link>
 

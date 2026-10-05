@@ -1,8 +1,7 @@
 "use client";
 
-import { useFormState } from "react-dom";
 import { create, update } from "@/actions/excepcionesLaborales.actions";
-import { useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { Button } from "../ui/button";
 
 type ExcepcionFormProps = {
@@ -17,7 +16,7 @@ type ExcepcionFormProps = {
 };
 
 export default function ExcepcionForm({ excepcion, onClose }: ExcepcionFormProps) {
-  const [state, formAction] = useFormState(
+  const [state, formAction] = useActionState(
     excepcion ? update : create,
     { success: false }
   );

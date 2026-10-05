@@ -22,7 +22,7 @@ export default function ExcepcionesClient({ excepciones }: ExcepcionesClientProp
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Formulario de creación */}
       <div className="lg:col-span-1">
-        <div className="bg-white rounded-lg shadow-sm border p-6 sticky top-8">
+        <div className="bg-white rounded-lg shadow-sm border p-6 lg:sticky lg:top-24">
           <h2 className="text-xl font-semibold mb-4">Nueva Excepción</h2>
           <ExcepcionForm />
         </div>

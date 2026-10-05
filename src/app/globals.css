@@ -85,6 +85,19 @@
   --sidebar-ring: 195 45% 65%;
 }
 
+/* Colores de marca disponibles como utilidades de Tailwind
+   (text-primary, bg-celeste/15, text-celeste-dark, ...). Se pueden
+   sobrescribir desde Configuración > Apariencia. */
+@theme inline {
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-ring: hsl(var(--ring));
+  --color-celeste: hsl(var(--celeste));
+  --color-celeste-light: hsl(var(--celeste-light));
+  --color-celeste-dark: hsl(var(--celeste-dark));
+}
+
 /* =========================
    DARK MODE
 ========================= */

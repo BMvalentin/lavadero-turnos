@@ -137,6 +137,7 @@ interface UploadOptions {
   folder: string;
   public_id?: string;
   tags?: string[];
+  maxWidth?: number;
 }
 
 export async function uploadImage(
@@ -155,7 +156,7 @@ export async function uploadImage(
         // ---- Transformaciones aplicadas por Cloudinary ----
         transformation: [
           {
-            width: 1200,
+            width: options.maxWidth ?? 1200,
             quality: "auto:good",     // compresión automática buena
             fetch_format: "auto",     // elige el mejor formato (webp, etc.)
             crop: "limit",            // no agranda imágenes más pequeñas

@@ -6,7 +6,8 @@ import { toZonedTime, fromZonedTime, formatInTimeZone } from "date-fns-tz";
 import { addMinutes } from "date-fns";
 import { serializeData } from "@/lib/utils";
 import { enviarCorreoCreacionTurno, enviarCorreoModificacionTurno, enviarCorreoCancelacionTurno, TurnoDetails } from "@/lib/mail";
-import { obtenerConfiguracion } from "./configuracion.actions";
+import { obtenerSiteConfig } from "./configuracion.actions";
+import { numeroWhatsApp } from "@/lib/siteConfig";
 
 const TIMEZONE = process.env.TIMEZONE || "America/Argentina/Buenos_Aires";
 
@@ -17,7 +18,9 @@ export type ActionState = {
 };
 
 async function getWhatsAppUrl(tipo: "solicitar" | "modificar" | "cancelar", detalles: TurnoDetails) {
-    const ownerNumber = await obtenerConfiguracion("WHATSAPP_OWNER_NUMBER");
+    // Los avisos van al mismo teléfono de contacto que se muestra en la web.
+    const { TELEFONO } = await obtenerSiteConfig();
+    const ownerNumber = numeroWhatsApp(TELEFONO);
     if (!ownerNumber) return null;
 
     const texto = `Hola, acabo de ${tipo} un turno.

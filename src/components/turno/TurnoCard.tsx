@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useActionState } from "react";
 import { useRouter } from "next/navigation";
-import { useFormState } from "react-dom";
 import { deleteTurno, completedTurno } from "@/actions/turno.actions";
 import EditTurnoModal from "./EditarTurnoModal";
 import { Button } from "../ui/button";
@@ -37,8 +36,8 @@ function NotificationModal({ url, message, onClose }: { url: string; message: st
 
 export default function TurnoCard({ session, turno }: { session: any; turno: any }) {
     const router = useRouter();
-    const [state, formAction] = useFormState(deleteTurno, initialState);
-    const [stateComplete, formActionComplete] = useFormState(completedTurno, initialState);
+    const [state, formAction] = useActionState(deleteTurno, initialState);
+    const [stateComplete, formActionComplete] = useActionState(completedTurno, initialState);
     const [showEditModal, setShowEditModal] = useState(false);
 
     const formatFecha = (fecha: Date) => new Date(fecha).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -68,7 +67,7 @@ export default function TurnoCard({ session, turno }: { session: any; turno: any
             )}
 
             <div className={`bg-white rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden ${isPasado ? 'opacity-75' : ''}`}>
-                <div className={`p-4 text-white ${isPasado ? 'bg-gray-500' : isHoy ? 'bg-green-700' : 'bg-[#6fa9da]'}`}>
+                <div className={`p-4 text-white ${isPasado ? 'bg-gray-500' : isHoy ? 'bg-green-700' : 'bg-celeste-dark'}`}>
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm opacity-90">{isPasado ? '🕐 Pasado' : isHoy ? '📅 Hoy' : '📅 Próximo'}</p>

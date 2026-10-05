@@ -7,6 +7,12 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  experimental: {
+    serverActions: {
+      // Permite subir imágenes de hasta 5 MB (default del framework: 1 MB).
+      bodySizeLimit: "5mb",
+    },
+  },
   serverExternalPackages: ['@prisma/client', 'prisma'],
   images: {
     remotePatterns: [

@@ -3,6 +3,7 @@
 import { create, update } from "@/actions/excepcionesLaborales.actions";
 import { useActionState, useEffect, useRef } from "react";
 import { Button } from "../ui/button";
+import FechaInput from "../ui/FechaInput";
 
 type ExcepcionFormProps = {
   excepcion?: {
@@ -73,13 +74,13 @@ export default function ExcepcionForm({ excepcion, onClose }: ExcepcionFormProps
         <label htmlFor="desde" className="block text-sm font-medium text-gray-700 mb-1">
           Desde
         </label>
-        <input
-          type="datetime-local"
+        <FechaInput
+          tipo="datetime-local"
           id="desde"
           name="desde"
           defaultValue={excepcion ? formatDateForInput(excepcion.desde) : ''}
           required
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-blue-500"
         />
       </div>
 
@@ -87,13 +88,13 @@ export default function ExcepcionForm({ excepcion, onClose }: ExcepcionFormProps
         <label htmlFor="hasta" className="block text-sm font-medium text-gray-700 mb-1">
           Hasta
         </label>
-        <input
-          type="datetime-local"
+        <FechaInput
+          tipo="datetime-local"
           id="hasta"
           name="hasta"
           defaultValue={excepcion ? formatDateForInput(excepcion.hasta) : ''}
           required
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-blue-500"
         />
       </div>
 

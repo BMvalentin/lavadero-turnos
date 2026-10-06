@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { esAdmin } from "@/lib/esAdmin";
 import { prisma } from "@/lib/prisma";
 
 export type ActionState = {
@@ -9,11 +10,15 @@ export type ActionState = {
   error?: string;
 };
 
+const NO_AUTORIZADO: ActionState = { error: "No autorizado", success: false };
+
 // Crear día laboral
 export async function create(
   prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  if (!(await esAdmin())) return NO_AUTORIZADO;
+
   try {
     const dia = parseInt(formData.get("dia") as string);
     const estado = formData.get("estado") === "true";
@@ -57,6 +62,8 @@ export async function update(
   prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  if (!(await esAdmin())) return NO_AUTORIZADO;
+
   try {
     const id = formData.get("id") as string;
     const dia = parseInt(formData.get("dia") as string);
@@ -109,6 +116,8 @@ export async function update(
 
 // Eliminar día laboral
 export async function deleteDiaLaboral(id: string): Promise<ActionState> {
+  if (!(await esAdmin())) return NO_AUTORIZADO;
+
   try {
 
     // Verificar si existe y tiene márgenes

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { esAdmin } from "@/lib/esAdmin";
 import { prisma } from "@/lib/prisma";
 
 export type ActionState = {
@@ -8,6 +9,8 @@ export type ActionState = {
   data?: any;
   error?: string;
 };
+
+const NO_AUTORIZADO: ActionState = { error: "No autorizado", success: false };
 
 /**
  * Valida formato de hora HH:mm
@@ -60,6 +63,8 @@ export async function createMargenLaboral(
   prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  if (!(await esAdmin())) return NO_AUTORIZADO;
+
   try {
     const diaId = formData.get("diaId") as string;
     const estado = formData.get("estado") === "true";
@@ -124,6 +129,8 @@ export async function updateMargenLaboral(
   prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  if (!(await esAdmin())) return NO_AUTORIZADO;
+
   try {
     const id = formData.get("id") as string;
     const diaId = formData.get("diaId") as string;
@@ -197,6 +204,8 @@ export async function updateMargenLaboral(
 
 // Eliminar margen laboral
 export async function deleteMargenLaboral(id: string): Promise<ActionState> {
+  if (!(await esAdmin())) return NO_AUTORIZADO;
+
   try {
 
     await prisma.margenes_laborales.delete({

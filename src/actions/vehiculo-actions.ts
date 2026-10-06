@@ -2,14 +2,18 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { esAdmin } from "@/lib/esAdmin";
 import { serializeData } from "@/lib/utils";
 import { uploadImage, deleteImage } from "@/lib/cloudinary";
+import { validarImagen } from "@/lib/imagen";
 
 export type ActionState = {
   error?: string;
   success?: boolean;
   data?: any;
 };
+
+const NO_AUTORIZADO: ActionState = { error: "No autorizado", success: false };
 
 export const getVehiculos = async (): Promise<ActionState> => {
   try {
@@ -46,6 +50,8 @@ export const createVehiculo = async (
   prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> => {
+  if (!(await esAdmin())) return NO_AUTORIZADO;
+
   try {
     const nombre = formData.get("nombre") as string;
     const estadoValue = formData.get("estado");
@@ -60,6 +66,9 @@ export const createVehiculo = async (
 
     // Si hay archivo, lo subimos a Cloudinary
     if (file && file.size > 0) {
+      const errorImagen = await validarImagen(file);
+      if (errorImagen) return { error: errorImagen, success: false };
+
       const buffer = Buffer.from(await file.arrayBuffer());
       const res = await uploadImage(buffer, {
         folder: "vehiculos",
@@ -87,8 +96,9 @@ export const createVehiculo = async (
     revalidatePath("/vehiculo");
     return { success: true, data: serializeData(nuevoVehiculo) };
   } catch (error) {
+    console.error("Error al crear vehículo:", error);
     return {
-      error: `Error al crear vehículo: ${error instanceof Error ? error.message : "Error desconocido"}`,
+      error: "No se pudo crear el vehículo",
       success: false,
     };
   }
@@ -98,6 +108,8 @@ export const actualizarVehiculo = async (
   prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> => {
+  if (!(await esAdmin())) return NO_AUTORIZADO;
+
   try {
     const id = formData.get("id") as string;
     const nombre = formData.get("nombre") as string;
@@ -121,6 +133,9 @@ export const actualizarVehiculo = async (
 
     // Si se sube una nueva imagen:
     if (file && file.size > 0) {
+      const errorImagen = await validarImagen(file);
+      if (errorImagen) return { error: errorImagen, success: false };
+
       // 1. Subir la nueva
       const buffer = Buffer.from(await file.arrayBuffer());
       const res = await uploadImage(buffer, {
@@ -156,14 +171,17 @@ export const actualizarVehiculo = async (
     revalidatePath("/vehiculo");
     return { success: true, data: serializeData(vehiculoActualizado) };
   } catch (error) {
+    console.error("Error al actualizar vehículo:", error);
     return {
-      error: `Error al actualizar: ${error instanceof Error ? error.message : "Error desconocido"}`,
+      error: "No se pudo actualizar el vehículo",
       success: false,
     };
   }
 };
 
 export const deleteVehiculo = async (prevState: ActionState, formData: FormData): Promise<ActionState> => {
+  if (!(await esAdmin())) return NO_AUTORIZADO;
+
   try {
     const id = formData.get('id') as string;
 

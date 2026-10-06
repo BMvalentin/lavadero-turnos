@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, Code2, MapPin, Phone } from "lucide-react";
 import { useSiteConfig } from "@/components/providers/SiteConfigProvider";
-import { DESARROLLADOR } from "@/lib/siteConfig";
+import { DESARROLLADOR, mapaLinkUrl } from "@/lib/siteConfig";
 
 const navegacion = [
   { label: "Inicio", href: "/#home" },
@@ -22,7 +22,7 @@ export function Footer({
 }) {
   const config = useSiteConfig();
   const telefonoHref = `tel:${config.TELEFONO.replace(/[^\d+]/g, "")}`;
-  const mapaHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(config.DIRECCION)}`;
+  const mapaHref = mapaLinkUrl(config);
 
   const creditoContenido = (
     <>

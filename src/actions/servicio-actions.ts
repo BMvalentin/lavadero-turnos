@@ -2,7 +2,9 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { esAdmin } from "@/lib/esAdmin";
 import { serializeData } from "@/lib/utils";
+import { validarImagen } from "@/lib/imagen";
 import {
   uploadImage,
   deleteImage,
@@ -16,19 +18,7 @@ export type ActionState = {
   data?: any;
 };
 
-const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
-
-type ImageValidation = { ok: true } | { ok: false; error: string };
-
-function validateImageFile(file: File): ImageValidation {
-  if (!file.type || !file.type.startsWith("image/")) {
-    return { ok: false, error: "El formato de imagen no es válido." };
-  }
-  if (file.size > MAX_IMAGE_SIZE_BYTES) {
-    return { ok: false, error: "La imagen supera el tamaño permitido (5 MB)." };
-  }
-  return { ok: true };
-}
+const NO_AUTORIZADO: ActionState = { error: "No autorizado", success: false };
 
 type ServicioErrorContext = {
   operacion: string;
@@ -84,6 +74,8 @@ export const createServicio = async (
   prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> => {
+  if (!(await esAdmin())) return NO_AUTORIZADO;
+
   const nombre = formData.get("nombre") as string;
   const estadoValue = formData.get("estado");
   const file = formData.get("srcImage") as File | null;
@@ -102,9 +94,9 @@ export const createServicio = async (
   let public_id: string | null = null;
 
   if (nuevaImagen) {
-    const validation = validateImageFile(nuevaImagen);
-    if (!validation.ok) {
-      return { error: validation.error, success: false };
+    const errorImagen = await validarImagen(nuevaImagen);
+    if (errorImagen) {
+      return { error: errorImagen, success: false };
     }
 
     try {
@@ -164,6 +156,8 @@ export const actualizarServicio = async (
   prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> => {
+  if (!(await esAdmin())) return NO_AUTORIZADO;
+
   const id = formData.get("id") as string;
   const nombre = formData.get("nombre") as string;
   const estadoValue = formData.get("estado");
@@ -206,9 +200,9 @@ export const actualizarServicio = async (
 
   // 1. Subir primero la nueva imagen (si la hay). NO borramos la anterior todavía.
   if (nuevaImagen) {
-    const validation = validateImageFile(nuevaImagen);
-    if (!validation.ok) {
-      return { error: validation.error, success: false };
+    const errorImagen = await validarImagen(nuevaImagen);
+    if (errorImagen) {
+      return { error: errorImagen, success: false };
     }
 
     try {
@@ -292,6 +286,8 @@ export const actualizarServicio = async (
 };
 
 export const deleteservicio = async (prevState: ActionState, formData: FormData): Promise<ActionState> => {
+  if (!(await esAdmin())) return NO_AUTORIZADO;
+
   try {
     const id = formData.get('id') as string;
     console.log("ID a eliminar:", id);
@@ -340,8 +336,9 @@ export const deleteservicio = async (prevState: ActionState, formData: FormData)
     };
 
   } catch (error) {
+    console.error("Error eliminando servicio:", error);
     return {
-      error: `Error: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+      error: "No se pudo eliminar el servicio",
       success: false
     };
   }

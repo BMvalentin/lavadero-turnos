@@ -10,9 +10,13 @@ import {
     SITE_CONFIG_KEYS,
     SITE_FORM_KEYS,
     SITE_TEXTO_MAX,
+    SITE_TEXT_OPCIONALES,
     esColorHex,
+    esEnlaceGoogleMaps,
+    extraerCoordenadas,
     numeroWhatsApp,
     type SiteConfig,
+    type SiteConfigKey,
     type SiteImageKey,
 } from "@/lib/siteConfig";
 import { deleteImage, getUserFriendlyCloudinaryMessage, uploadImage } from "@/lib/cloudinary";
@@ -61,7 +65,7 @@ export async function actualizarSiteConfig(
     }
 
     // Cada sección envía sólo sus campos; se guardan los que vengan en el form.
-    const valores = SITE_FORM_KEYS.filter((clave) => formData.has(clave)).map((clave) => ({
+    const valores: { clave: SiteConfigKey; valor: string }[] = SITE_FORM_KEYS.filter((clave) => formData.has(clave)).map((clave) => ({
         clave,
         valor: String(formData.get(clave) ?? "").trim(),
     }));
@@ -69,7 +73,7 @@ export async function actualizarSiteConfig(
     if (valores.length === 0) {
         return { error: "No hay cambios para guardar", success: false };
     }
-    if (valores.some((v) => v.valor === "")) {
+    if (valores.some((v) => v.valor === "" && !(SITE_TEXT_OPCIONALES as SiteConfigKey[]).includes(v.clave))) {
         return { error: "Todos los campos son obligatorios", success: false };
     }
     if (valores.some((v) => v.valor.length > SITE_TEXTO_MAX)) {
@@ -83,6 +87,13 @@ export async function actualizarSiteConfig(
     const telefono = valores.find((v) => v.clave === "TELEFONO");
     if (telefono && !/^\d{10,15}$/.test(numeroWhatsApp(telefono.valor))) {
         return { error: "El teléfono debe incluir código de país y de área (ej: +54 9 223 439-8429)", success: false };
+    }
+
+    const mapa = valores.find((v) => v.clave === "MAPA_URL");
+    if (mapa) {
+        const resultado = await procesarEnlaceMapa(mapa.valor);
+        if ("error" in resultado) return { error: resultado.error, success: false };
+        valores.push({ clave: "MAPA_COORDENADAS", valor: resultado.coordenadas });
     }
 
     try {
@@ -104,6 +115,46 @@ export async function actualizarSiteConfig(
         console.error("Error al actualizar configuración del sitio:", error);
         return { error: "Error al guardar la configuración", success: false };
     }
+}
+
+// ---------- Mapa ----------
+
+// Acepta un enlace de Google Maps (largo o corto, de "Compartir") o coordenadas
+// "lat, lng". Devuelve las coordenadas para mostrar el punto exacto en el mapa
+// ("" si el enlace no las incluye: en ese caso el mapa usa la dirección).
+async function procesarEnlaceMapa(valor: string): Promise<{ coordenadas: string } | { error: string }> {
+    if (valor === "") return { coordenadas: "" };
+
+    const directas = extraerCoordenadas(valor);
+    if (directas && !/^https?:/i.test(valor)) return { coordenadas: directas };
+
+    let url: URL;
+    try {
+        url = new URL(valor);
+    } catch {
+        return { error: "El enlace del mapa no es válido. Pegá el enlace de Google Maps o las coordenadas (ej: -37.83, -57.50)" };
+    }
+    if (url.protocol !== "https:" || !esEnlaceGoogleMaps(url)) {
+        return { error: "El enlace del mapa debe ser de Google Maps" };
+    }
+    if (directas) return { coordenadas: directas };
+
+    // Los enlaces cortos (maps.app.goo.gl) no traen coordenadas: seguimos la redirección.
+    if (url.hostname === "maps.app.goo.gl" || url.hostname === "goo.gl") {
+        try {
+            const res = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(5000) });
+            const destino = res.headers.get("location");
+            if (destino) {
+                const destinoUrl = new URL(destino, url);
+                if (esEnlaceGoogleMaps(destinoUrl)) {
+                    return { coordenadas: extraerCoordenadas(destinoUrl.toString()) ?? "" };
+                }
+            }
+        } catch (error) {
+            console.error("No se pudo resolver el enlace del mapa:", error);
+        }
+    }
+    return { coordenadas: "" };
 }
 
 // ---------- Imágenes del sitio (logo y banner) ----------

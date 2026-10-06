@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { enviarCorreoCancelacionTurno } from "@/lib/mail";
 import { formatInTimeZone } from "date-fns-tz";
+import { usuarioActual } from "@/lib/esAdmin";
 
 const TIMEZONE = process.env.TIMEZONE || "America/Argentina/Buenos_Aires";
 
@@ -15,18 +16,14 @@ export type State = {
   user?: { name: string | null; telefono: string | null };
 };
 
-export async function updateProfile(userId: string, formData: FormData): Promise<State> {
-  console.log("🟢 1. Server Action Iniciado. Usuario ID:", userId);
+// El usuario siempre sale de la sesión: nunca se acepta un id del cliente.
+export async function updateProfile(formData: FormData): Promise<State> {
+  const actual = await usuarioActual();
+  if (!actual) return { success: false, message: "No autorizado" };
+  const userId = actual.id;
 
   const name = formData.get("name") as string;
   const telefono = formData.get("telefono") as string;
-
-  console.log("🟢 2. Datos recibidos:", { name, telefono });
-
-  if (!userId) {
-    console.log("🔴 Error: No llegó el User ID");
-    return { success: false, message: "ID de usuario no encontrado" };
-  }
 
   try {
     const updatedUser = await prisma.user.update({
@@ -37,7 +34,6 @@ export async function updateProfile(userId: string, formData: FormData): Promise
       },
     });
 
-    console.log("🟢 3. Actualización en DB exitosa");
     revalidatePath("/dashboard"); // Actualiza la UI
     return { 
       success: true, 
@@ -51,7 +47,11 @@ export async function updateProfile(userId: string, formData: FormData): Promise
   }
 }
 
-export async function getUserTurnos(userId: string) {
+export async function getUserTurnos() {
+  const actual = await usuarioActual();
+  if (!actual) return [];
+  const userId = actual.id;
+
   try {
     const turnosRaw = await prisma.turno.findMany({
       where: { userId },
@@ -82,7 +82,15 @@ export async function getUserTurnos(userId: string) {
 }
 
 export async function cancelTurno(turnoId: string) {
+  const actual = await usuarioActual();
+  if (!actual) return { success: false, message: "No autorizado" };
+
   try {
+    const turno = await prisma.turno.findUnique({ where: { id: turnoId }, select: { userId: true } });
+    if (!turno || (turno.userId !== actual.id && !actual.esAdmin)) {
+      return { success: false, message: "No autorizado" };
+    }
+
     const turnoActualizado = await prisma.turno.update({
       where: { id: turnoId },
       data: { estado: 0 }, // 0 = cancelado 1= pendiente 2= completado
@@ -114,8 +122,10 @@ export async function cancelTurno(turnoId: string) {
   }
 }
 
-export async function updatePassword(userId: string, formData: FormData): Promise<State> {
-  console.log("🟢 1. Server Action Password Iniciado. Usuario ID:", userId);
+export async function updatePassword(formData: FormData): Promise<State> {
+  const actual = await usuarioActual();
+  if (!actual) return { success: false, message: "No autorizado" };
+  const userId = actual.id;
 
   const oldPassword = formData.get("oldPassword") as string;
   const newPassword = formData.get("newPassword") as string;
@@ -156,7 +166,6 @@ export async function updatePassword(userId: string, formData: FormData): Promis
       data: { password: hashedPassword },
     });
 
-    console.log("🟢 2. Contraseña actualizada con éxito");
     return { success: true, message: "Contraseña actualizada correctamente" };
 
   } catch (error) {

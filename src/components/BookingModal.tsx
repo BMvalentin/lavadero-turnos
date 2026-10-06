@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Car, Calendar, Clock, Phone, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import FechaInput from "@/components/ui/FechaInput";
+import { formatValorInput } from "@/lib/fechas";
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -37,7 +39,7 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
     }
     
     toast.success("¡Turno reservado con éxito!", {
-      description: `Te esperamos el ${formData.date} a las ${formData.time}`,
+      description: `Te esperamos el ${formatValorInput(formData.date)} a las ${formData.time}`,
     });
     
     setStep(4);
@@ -140,12 +142,11 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
                     
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-foreground">Fecha</label>
-                      <input
-                        type="date"
+                      <FechaInput
                         min={today}
                         value={formData.date}
-                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                        className="w-full p-3 rounded-xl bg-secondary border border-border text-foreground focus:border-primary focus:outline-none transition-colors"
+                        onChange={(date) => setFormData({ ...formData, date })}
+                        className="w-full p-3 rounded-xl bg-secondary border border-border text-foreground focus-within:border-primary transition-colors"
                       />
                     </div>
 

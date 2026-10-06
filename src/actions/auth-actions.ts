@@ -63,7 +63,6 @@ export const registerAction = async (prevState: ActionState, formData: FormData)
   }
 
   const { email, password, name } = validated.data;
-  console.log("🟢 3. Datos validados:", email); // <--- LOG
 
   try {
     // Verificar conexión
@@ -91,9 +90,8 @@ export const registerAction = async (prevState: ActionState, formData: FormData)
   } catch (error: any) {
     // ESTO ES LO IMPORTANTE: Imprime el error real en la terminal
     console.error("🔴 ERROR FATAL EN REGISTER:", error);
-    console.error("Mensaje de error:", error.message);
-    
-    return { error: "Error interno: " + error.message };
+
+    return { error: "No se pudo crear la cuenta. Intentá de nuevo más tarde." };
   }
 };
 

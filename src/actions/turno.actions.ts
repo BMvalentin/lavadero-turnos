@@ -8,6 +8,8 @@ import { serializeData } from "@/lib/utils";
 import { enviarCorreoCreacionTurno, enviarCorreoModificacionTurno, enviarCorreoCancelacionTurno, TurnoDetails } from "@/lib/mail";
 import { obtenerSiteConfig } from "./configuracion.actions";
 import { numeroWhatsApp } from "@/lib/siteConfig";
+import { usuarioActual } from "@/lib/esAdmin";
+import { horarioReservadoSchema, patenteSchema } from "@/lib/zod";
 
 const TIMEZONE = process.env.TIMEZONE || "America/Argentina/Buenos_Aires";
 
@@ -16,6 +18,20 @@ export type ActionState = {
     success?: boolean;
     data?: any;
 };
+
+const NO_AUTORIZADO: ActionState = { error: "No autorizado", success: false };
+
+type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
+// La espera por el bloqueo cuenta dentro del timeout, así que lo damos holgado.
+const OPCIONES_TRANSACCION = { maxWait: 5000, timeout: 15000 };
+
+// Bloquea (FOR UPDATE) las filas del día de la semana hasta que termine la
+// transacción. Las reservas del mismo día quedan en fila en vez de validarse
+// en paralelo contra datos que todavía no incluyen el turno del otro.
+async function bloquearDiaLaboral(tx: TxClient, dia: number) {
+    await tx.$queryRaw`SELECT id FROM dia_laboral WHERE dia = ${dia} FOR UPDATE`;
+}
 
 async function getWhatsAppUrl(tipo: "solicitar" | "modificar" | "cancelar", detalles: TurnoDetails) {
     // Los avisos van al mismo teléfono de contacto que se muestra en la web.
@@ -48,19 +64,37 @@ export async function createTurno(
     prevState: ActionState,
     formData: FormData
 ): Promise<ActionState> {
+    const actual = await usuarioActual();
+    if (!actual) return NO_AUTORIZADO;
+
     try {
         const vehiculoServicioId = formData.get("vehiculoServicioId") as string;
-        const userId = formData.get("userId") as string;
+        // Solo un admin puede reservar a nombre de otro usuario.
+        const userId = actual.esAdmin ? (formData.get("userId") as string) : actual.id;
         const horarioReservadoStr = formData.get("horarioReservado") as string;
-        const patente = formData.get("patente") as string;
+        const patenteStr = formData.get("patente") as string;
 
-        if (!vehiculoServicioId || !userId || !horarioReservadoStr || !patente) {
+        if (!vehiculoServicioId || !userId || !horarioReservadoStr || !patenteStr) {
             return { error: "Todos los campos son requeridos", success: false };
         }
+
+        if (!horarioReservadoSchema.safeParse(horarioReservadoStr).success) {
+            return { error: "Horario inválido", success: false };
+        }
+
+        const patenteValidada = patenteSchema.safeParse(patenteStr);
+        if (!patenteValidada.success) {
+            return { error: "Patente inválida: usá solo letras y números (5 a 10 caracteres)", success: false };
+        }
+        const patente = patenteValidada.data;
 
         // --- Lógica de Desfase :) ---
         const fechaSolicitadaInicio = fromZonedTime(horarioReservadoStr, TIMEZONE);
         const ahoraUTC = new Date();
+
+        if (isNaN(fechaSolicitadaInicio.getTime())) {
+            return { error: "Horario inválido", success: false };
+        }
 
         if (fechaSolicitadaInicio <= addMinutes(ahoraUTC, 10)) {
             return { error: "Reserva con al menos 10 min de antelación.", success: false };
@@ -68,14 +102,11 @@ export async function createTurno(
 
         const vehiculoServicio = await prisma.vehiculo_servicio.findUnique({
             where: { id: vehiculoServicioId },
-            select: { duracion: true, precio: true, senia: true }
+            select: { duracion: true, precio: true, senia: true, estado: true }
         });
 
-        if (!vehiculoServicio) return { error: "Servicio no encontrado", success: false };
-
-        if (!vehiculoServicioId || !userId || !horarioReservadoStr || !patente) {
-            return { error: "Todos los campos son requeridos", success: false };
-        }
+        // Un servicio dado de baja no se puede reservar aunque alguien tenga su id.
+        if (!vehiculoServicio || !vehiculoServicio.estado) return { error: "Servicio no encontrado", success: false };
 
         const fechaSolicitadaFin = addMinutes(fechaSolicitadaInicio, vehiculoServicio.duracion);
 
@@ -86,70 +117,82 @@ export async function createTurno(
 
         const diaSemanaIndex = toZonedTime(fechaSolicitadaInicio, TIMEZONE).getDay();
 
-        const [diaLaboralConfig, excepciones, turnosDelDia] = await Promise.all([
-            prisma.dia_laboral.findFirst({
-                where: { dia: diaSemanaIndex, estado: true },
-                include: { margenes: { where: { estado: true } } }
-            }),
-            prisma.expeciones_laborales.findMany({
-                where: {
-                    estado: true,
-                    desde: { lte: fechaSolicitadaFin },
-                    hasta: { gte: fechaSolicitadaInicio }
-                }
-            }),
-            prisma.turno.findMany({
-                where: {
-                    estado: 1,
-                    horarioReservado: { gte: inicioDia, lte: finDia }
-                },
-                include: { vehiculo_servicio: { select: { duracion: true } } }
-            })
-        ]);
+        // La validación de choque y el alta van en una transacción que bloquea el
+        // día laboral: así dos reservas simultáneas no pueden pasar la validación
+        // a la vez y quedar superpuestas.
+        const resultado = await prisma.$transaction(async (tx) => {
+            await bloquearDiaLaboral(tx, diaSemanaIndex);
 
-        if (excepciones.length > 0) {
-            return { error: `No disponible: ${excepciones[0].motivo}`, success: false };
-        }
+            const [diaLaboralConfig, excepciones, turnosDelDia] = await Promise.all([
+                tx.dia_laboral.findFirst({
+                    where: { dia: diaSemanaIndex, estado: true },
+                    include: { margenes: { where: { estado: true } } }
+                }),
+                tx.expeciones_laborales.findMany({
+                    where: {
+                        estado: true,
+                        desde: { lte: fechaSolicitadaFin },
+                        hasta: { gte: fechaSolicitadaInicio }
+                    }
+                }),
+                tx.turno.findMany({
+                    where: {
+                        estado: 1,
+                        horarioReservado: { gte: inicioDia, lte: finDia }
+                    },
+                    include: { vehiculo_servicio: { select: { duracion: true } } }
+                })
+            ]);
 
-        if (!diaLaboralConfig) {
-            return { error: "Cerrado este día.", success: false };
-        }
-
-        // Validar márgenes usando minutos locales
-        const minutosInicio = getMinutesFromZonedDate(fechaSolicitadaInicio);
-        const minutosFin = minutosInicio + vehiculoServicio.duracion;
-
-        const entraEnMargen = diaLaboralConfig.margenes.some((m) => {
-            return minutosInicio >= timeToMinutes(m.desde) && minutosFin <= timeToMinutes(m.hasta);
-        });
-
-        if (!entraEnMargen) {
-            return { error: "Horario fuera de la jornada laboral.", success: false };
-        }
-
-        // Validar choque con otros turnos
-        const hayChoque = turnosDelDia.some((t) => {
-            const tInicio = t.horarioReservado;
-            const tFin = addMinutes(tInicio, t.vehiculo_servicio.duracion);
-            return (fechaSolicitadaInicio < tFin && fechaSolicitadaFin > tInicio);
-        });
-
-        if (hayChoque) return { error: "El horario ya está ocupado.", success: false };
-
-        const nuevoTurno = await prisma.turno.create({
-            data: {
-                id: crypto.randomUUID(),
-                vehiculoServicioId,
-                userId,
-                horarioReservado: fechaSolicitadaInicio,
-                precioCongelado: vehiculoServicio.precio,
-                seniaCongelada: vehiculoServicio.senia,
-                patente: patente.toUpperCase(),
-                estado: 1,
-                createdAt: ahoraUTC,
-                updatedAt: ahoraUTC,
+            if (excepciones.length > 0) {
+                return { error: `No disponible: ${excepciones[0].motivo}` };
             }
-        });
+
+            if (!diaLaboralConfig) {
+                return { error: "Cerrado este día." };
+            }
+
+            // Validar márgenes usando minutos locales
+            const minutosInicio = getMinutesFromZonedDate(fechaSolicitadaInicio);
+            const minutosFin = minutosInicio + vehiculoServicio.duracion;
+
+            const entraEnMargen = diaLaboralConfig.margenes.some((m) => {
+                return minutosInicio >= timeToMinutes(m.desde) && minutosFin <= timeToMinutes(m.hasta);
+            });
+
+            if (!entraEnMargen) {
+                return { error: "Horario fuera de la jornada laboral." };
+            }
+
+            // Validar choque con otros turnos
+            const hayChoque = turnosDelDia.some((t) => {
+                const tInicio = t.horarioReservado;
+                const tFin = addMinutes(tInicio, t.vehiculo_servicio.duracion);
+                return (fechaSolicitadaInicio < tFin && fechaSolicitadaFin > tInicio);
+            });
+
+            if (hayChoque) return { error: "El horario ya está ocupado." };
+
+            const turno = await tx.turno.create({
+                data: {
+                    id: crypto.randomUUID(),
+                    vehiculoServicioId,
+                    userId,
+                    horarioReservado: fechaSolicitadaInicio,
+                    precioCongelado: vehiculoServicio.precio,
+                    seniaCongelada: vehiculoServicio.senia,
+                    patente,
+                    estado: 1,
+                    createdAt: ahoraUTC,
+                    updatedAt: ahoraUTC,
+                }
+            });
+
+            return { turno };
+        }, OPCIONES_TRANSACCION);
+
+        if ("error" in resultado) return { error: resultado.error, success: false };
+        const nuevoTurno = resultado.turno;
 
         let whatsappUrl: string | null = null;
         let turnoDetalles: TurnoDetails | null = null;
@@ -207,9 +250,14 @@ export async function createTurno(
 }
 
 export async function getTurnos(params?: { userId?: string; fecha?: string }): Promise<ActionState> {
+    const actual = await usuarioActual();
+    if (!actual) return NO_AUTORIZADO;
+
     try {
         let where: any = { estado: 1 };
-        if (params?.userId) where.userId = params.userId;
+        // Un usuario común solo ve sus propios turnos.
+        const userId = actual.esAdmin ? params?.userId : actual.id;
+        if (userId) where.userId = userId;
 
         if (params?.fecha) {
             // fecha viene como "YYYY-MM-DD"
@@ -251,12 +299,28 @@ export async function actualizarTurno(
     prevState: ActionState,
     formData: FormData
 ): Promise<ActionState> {
+    const actual = await usuarioActual();
+    if (!actual) return NO_AUTORIZADO;
+
     try {
         const id = formData.get("id") as string;
         const horarioReservadoStr = formData.get("horarioReservado") as string; // Viene "YYYY-MM-DDTHH:mm"
-        const patente = formData.get("patente") as string;
+        const patenteStr = formData.get("patente") as string;
 
         if (!id) return { error: "ID no proporcionado", success: false };
+
+        if (horarioReservadoStr && !horarioReservadoSchema.safeParse(horarioReservadoStr).success) {
+            return { error: "Horario inválido", success: false };
+        }
+
+        let patente: string | null = null;
+        if (patenteStr) {
+            const patenteValidada = patenteSchema.safeParse(patenteStr);
+            if (!patenteValidada.success) {
+                return { error: "Patente inválida: usá solo letras y números (5 a 10 caracteres)", success: false };
+            }
+            patente = patenteValidada.data;
+        }
 
         // 1. Obtener el turno actual
         const turnoActual = await prisma.turno.findUnique({
@@ -265,6 +329,15 @@ export async function actualizarTurno(
         });
 
         if (!turnoActual) return { error: "Turno no encontrado", success: false };
+        if (turnoActual.userId !== actual.id && !actual.esAdmin) return NO_AUTORIZADO;
+
+        // Solo se modifican turnos pendientes que todavía no pasaron.
+        if (turnoActual.estado !== 1) {
+            return { error: "Solo se pueden modificar turnos pendientes.", success: false };
+        }
+        if (turnoActual.horarioReservado < new Date()) {
+            return { error: "No se puede modificar un turno que ya pasó.", success: false };
+        }
 
         // 2. Manejo de fecha con Zona Horaria
         // Si viene un string nuevo, lo interpretamos como Argentina. Si no, mantenemos el Date de la DB.
@@ -275,6 +348,10 @@ export async function actualizarTurno(
         const duracion = turnoActual.vehiculo_servicio.duracion;
         const fechaSolicitadaFin = addMinutes(fechaSolicitadaInicio, duracion);
         const ahoraUTC = new Date();
+
+        if (isNaN(fechaSolicitadaInicio.getTime())) {
+            return { error: "Horario inválido", success: false };
+        }
 
         // 3. Validación de fecha pasada (solo si cambió el horario)
         if (horarioReservadoStr) {
@@ -290,75 +367,85 @@ export async function actualizarTurno(
         const finDia = fromZonedTime(`${fechaSoloString} 23:59:59`, TIMEZONE);
         const diaSemanaIndex = toZonedTime(fechaSolicitadaInicio, TIMEZONE).getDay();
 
-        const [diaLaboralConfig, excepciones, turnosDelDia] = await Promise.all([
-            prisma.dia_laboral.findFirst({
-                where: { dia: diaSemanaIndex, estado: true },
-                include: { margenes: { where: { estado: true } } }
-            }),
-            prisma.expeciones_laborales.findMany({
-                where: {
-                    estado: true,
-                    desde: { lte: fechaSolicitadaFin },
-                    hasta: { gte: fechaSolicitadaInicio }
-                }
-            }),
-            prisma.turno.findMany({
-                where: {
-                    estado: 1,
-                    horarioReservado: { gte: inicioDia, lte: finDia },
-                    id: { not: id } // Importante: Ignorar el turno que estamos editando
-                },
-                include: { vehiculo_servicio: { select: { duracion: true } } }
-            })
-        ]);
+        // Igual que en createTurno: validación y guardado bajo el bloqueo del día.
+        const resultado = await prisma.$transaction(async (tx) => {
+            await bloquearDiaLaboral(tx, diaSemanaIndex);
 
-        // 5. Validar Excepciones
-        if (excepciones.length > 0) {
-            return { error: `Horario no disponible: ${excepciones[0].motivo}`, success: false };
-        }
+            const [diaLaboralConfig, excepciones, turnosDelDia] = await Promise.all([
+                tx.dia_laboral.findFirst({
+                    where: { dia: diaSemanaIndex, estado: true },
+                    include: { margenes: { where: { estado: true } } }
+                }),
+                tx.expeciones_laborales.findMany({
+                    where: {
+                        estado: true,
+                        desde: { lte: fechaSolicitadaFin },
+                        hasta: { gte: fechaSolicitadaInicio }
+                    }
+                }),
+                tx.turno.findMany({
+                    where: {
+                        estado: 1,
+                        horarioReservado: { gte: inicioDia, lte: finDia },
+                        id: { not: id } // Importante: Ignorar el turno que estamos editando
+                    },
+                    include: { vehiculo_servicio: { select: { duracion: true } } }
+                })
+            ]);
 
-        // 6. Validar Horario Laboral
-        if (!diaLaboralConfig) {
-            return { error: "El negocio está cerrado este día.", success: false };
-        }
-
-        const minutosInicio = getMinutesFromZonedDate(fechaSolicitadaInicio);
-        const minutosFin = minutosInicio + duracion;
-
-        const entraEnMargen = diaLaboralConfig.margenes.some((margen) => {
-            const mInicio = timeToMinutes(margen.desde);
-            const mFin = timeToMinutes(margen.hasta);
-            return minutosInicio >= mInicio && minutosFin <= mFin;
-        });
-
-        if (!entraEnMargen) {
-            return { error: "El nuevo horario está fuera de la jornada laboral.", success: false };
-        }
-
-        // 7. Validar Superposición (Overlap)
-        const hayChoque = turnosDelDia.some((t) => {
-            const tInicio = t.horarioReservado;
-            const tFin = addMinutes(tInicio, t.vehiculo_servicio.duracion);
-            return (fechaSolicitadaInicio < tFin && fechaSolicitadaFin > tInicio);
-        });
-
-        if (hayChoque) {
-            return { error: "El nuevo horario ya está ocupado por otro turno.", success: false };
-        }
-
-        // 8. Actualización final
-        const turnoActualizado = await prisma.turno.update({
-            where: { id },
-            data: {
-                horarioReservado: fechaSolicitadaInicio,
-                patente: patente ? patente.toUpperCase() : turnoActual.patente,
-                updatedAt: ahoraUTC, // Satisfacemos el campo obligatorio
-            },
-            include: {
-                user: true,
-                vehiculo_servicio: { include: { vehiculo: true, servicio: true } }
+            // 5. Validar Excepciones
+            if (excepciones.length > 0) {
+                return { error: `Horario no disponible: ${excepciones[0].motivo}` };
             }
-        });
+
+            // 6. Validar Horario Laboral
+            if (!diaLaboralConfig) {
+                return { error: "El negocio está cerrado este día." };
+            }
+
+            const minutosInicio = getMinutesFromZonedDate(fechaSolicitadaInicio);
+            const minutosFin = minutosInicio + duracion;
+
+            const entraEnMargen = diaLaboralConfig.margenes.some((margen) => {
+                const mInicio = timeToMinutes(margen.desde);
+                const mFin = timeToMinutes(margen.hasta);
+                return minutosInicio >= mInicio && minutosFin <= mFin;
+            });
+
+            if (!entraEnMargen) {
+                return { error: "El nuevo horario está fuera de la jornada laboral." };
+            }
+
+            // 7. Validar Superposición (Overlap)
+            const hayChoque = turnosDelDia.some((t) => {
+                const tInicio = t.horarioReservado;
+                const tFin = addMinutes(tInicio, t.vehiculo_servicio.duracion);
+                return (fechaSolicitadaInicio < tFin && fechaSolicitadaFin > tInicio);
+            });
+
+            if (hayChoque) {
+                return { error: "El nuevo horario ya está ocupado por otro turno." };
+            }
+
+            // 8. Actualización final
+            const turno = await tx.turno.update({
+                where: { id },
+                data: {
+                    horarioReservado: fechaSolicitadaInicio,
+                    patente: patente ?? turnoActual.patente,
+                    updatedAt: ahoraUTC, // Satisfacemos el campo obligatorio
+                },
+                include: {
+                    user: true,
+                    vehiculo_servicio: { include: { vehiculo: true, servicio: true } }
+                }
+            });
+
+            return { turno };
+        }, OPCIONES_TRANSACCION);
+
+        if ("error" in resultado) return { error: resultado.error, success: false };
+        const turnoActualizado = resultado.turno;
 
         let whatsappUrl = null;
         let detallesModificacion = null;
@@ -411,13 +498,16 @@ export async function actualizarTurno(
     } catch (error) {
         console.error("Error al actualizar turno:", error);
         return {
-            error: error instanceof Error ? error.message : "Error desconocido al actualizar",
+            error: "No se pudo actualizar el turno",
             success: false
         };
     }
 }
 
 export async function obtenerDatosParaTurno(): Promise<ActionState> {
+    const actual = await usuarioActual();
+    if (!actual) return NO_AUTORIZADO;
+
     try {
         const [configuraciones, usuarios] = await Promise.all([
             prisma.vehiculo_servicio.findMany({
@@ -435,14 +525,17 @@ export async function obtenerDatosParaTurno(): Promise<ActionState> {
                     { servicio: { nombre: 'asc' } }
                 ]
             }),
-            prisma.user.findMany({
-                select: {
-                    id: true,
-                    name: true,
-                    email: true
-                },
-                orderBy: { name: 'asc' }
-            })
+            // La lista de usuarios solo la necesita el admin para reservar a nombre de otro.
+            actual.esAdmin
+                ? prisma.user.findMany({
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true
+                    },
+                    orderBy: { name: 'asc' }
+                })
+                : Promise.resolve([])
         ]);
 
         // Convertimos los tipos Decimal de Prisma a Number para que el Front no explote
@@ -473,6 +566,8 @@ export async function deleteTurno(
     prevState: ActionState,
     formData: FormData
 ): Promise<ActionState> {
+    const actual = await usuarioActual();
+    if (!actual) return NO_AUTORIZADO;
 
     try {
         const id = formData.get("id") as string;
@@ -499,6 +594,8 @@ export async function deleteTurno(
                 success: false
             };
         }
+
+        if (existe.userId !== actual.id && !actual.esAdmin) return NO_AUTORIZADO;
 
         await prisma.turno.update({
             where: { id },
@@ -540,7 +637,7 @@ export async function deleteTurno(
     } catch (error) {
         console.error("Error eliminando turno:", error);
         return {
-            error: error instanceof Error ? error.message : "Error desconocido al eliminar el turno",
+            error: "No se pudo eliminar el turno",
             success: false
         };
     }
@@ -550,6 +647,7 @@ export async function completedTurno(
     prevState: ActionState,
     formData: FormData
 ): Promise<ActionState> {
+    if (!(await usuarioActual())?.esAdmin) return NO_AUTORIZADO;
 
     try {
         const id = formData.get("id") as string;
@@ -592,7 +690,7 @@ export async function completedTurno(
     } catch (error) {
         console.error("Error eliminando turno:", error);
         return {
-            error: error instanceof Error ? error.message : "Error desconocido al eliminar el turno",
+            error: "No se pudo eliminar el turno",
             success: false
         };
     }

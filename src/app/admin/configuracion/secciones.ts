@@ -8,6 +8,8 @@ export type Campo = {
     multilinea?: boolean;
     /** Ocupa todo el ancho de la tarjeta (los multilínea siempre lo hacen). */
     anchoCompleto?: boolean;
+    /** Se puede dejar vacío. */
+    opcional?: boolean;
 };
 
 export type Seccion = { titulo: string; descripcion: string; campos: Campo[] };
@@ -66,6 +68,14 @@ export const SECCIONES_UBICACION: Seccion[] = [
                 ayuda: "Se muestra en la web y es el número al que los clientes escriben por WhatsApp al pedir, modificar o cancelar un turno. Usá un celular con WhatsApp, con código de país y de área, sin el 0 ni el 15.",
                 placeholder: "+54 9 223 439-8429",
                 anchoCompleto: true,
+            },
+            {
+                clave: "MAPA_URL",
+                label: "Ubicación en Google Maps (opcional)",
+                ayuda: "Para marcar el punto exacto del local: en Google Maps buscá el lavadero (o mantené presionado sobre el mapa para soltar un pin), tocá \"Compartir\" → \"Copiar enlace\" y pegalo acá. También podés pegar las coordenadas (ej: -37.8312, -57.5098). Si lo dejás vacío, el mapa se ubica por la dirección.",
+                placeholder: "https://maps.app.goo.gl/...",
+                anchoCompleto: true,
+                opcional: true,
             },
         ],
     },

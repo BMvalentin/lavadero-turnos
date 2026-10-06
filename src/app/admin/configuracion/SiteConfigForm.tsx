@@ -61,7 +61,7 @@ export default function SiteConfigForm({
                                         id={campo.clave}
                                         name={campo.clave}
                                         defaultValue={initialValues[campo.clave]}
-                                        required
+                                        required={!campo.opcional}
                                         maxLength={SITE_TEXTO_MAX}
                                         rows={3}
                                         className={`${inputClases} resize-y`}
@@ -72,7 +72,7 @@ export default function SiteConfigForm({
                                         id={campo.clave}
                                         name={campo.clave}
                                         defaultValue={initialValues[campo.clave]}
-                                        required
+                                        required={!campo.opcional}
                                         maxLength={SITE_TEXTO_MAX}
                                         placeholder={campo.placeholder}
                                         className={inputClases}

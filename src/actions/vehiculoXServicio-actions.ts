@@ -2,7 +2,9 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { esAdmin } from "@/lib/esAdmin";
 import { serializeData } from "@/lib/utils";
+import { vehiculoServicioSchema } from "@/lib/zod";
 
 export type ActionState = {
     error?: string;
@@ -10,10 +12,14 @@ export type ActionState = {
     data?: any;
 };
 
+const NO_AUTORIZADO: ActionState = { error: "No autorizado", success: false };
+
 export async function createVehiculoXServicio(
     prevState: ActionState,
     formData: FormData
 ): Promise<ActionState> {
+    if (!(await esAdmin())) return NO_AUTORIZADO;
+
     
     try {
         const id_vehiculo = formData.get("id_vehiculo");
@@ -38,14 +44,21 @@ export async function createVehiculoXServicio(
             };
         }
 
+        const montos = vehiculoServicioSchema.safeParse({
+            duracion: duracionMinutos,
+            precio,
+            descuento: descuento || 0,
+            senia: senia || 0,
+        });
+        if (!montos.success) {
+            return { error: montos.error.issues[0].message, success: false };
+        }
+
         const data = {
             id: crypto.randomUUID(),
             vehiculoId: String(id_vehiculo),
             servicioId: String(id_servicio),
-            duracion: Number(duracionMinutos),
-            precio: Number(precio),
-            descuento: Number(descuento || 0),
-            senia: Number(senia || 0),
+            ...montos.data,
             estado: true,
             createdAt: new Date(),
             updatedAt: new Date()
@@ -61,8 +74,9 @@ export async function createVehiculoXServicio(
         };
 
     } catch (error) {
+        console.error("No se pudo crear la configuración:", error);
         return {
-            error: error instanceof Error ? error.message : "Error desconocido",
+            error: "No se pudo crear la configuración",
             success: false
         };
     }
@@ -72,6 +86,8 @@ export async function actualizarVehiculoXServicio(
     prevState: ActionState,
     formData: FormData
 ): Promise<ActionState> {
+    if (!(await esAdmin())) return NO_AUTORIZADO;
+
   
     try {
         const id = formData.get("id");
@@ -79,6 +95,16 @@ export async function actualizarVehiculoXServicio(
         const servicioId = String(formData.get("id_servicio"));
         
         if (!id) return { error: "ID no proporcionado", success: false };
+
+        const montos = vehiculoServicioSchema.safeParse({
+            duracion: formData.get("duracionMinutos"),
+            precio: formData.get("precio"),
+            descuento: formData.get("descuento") || 0,
+            senia: formData.get("senia") || 0,
+        });
+        if (!montos.success) {
+            return { error: montos.error.issues[0].message, success: false };
+        }
 
         // 1. VALIDACIÓN DE DUPLICADOS:
         // Buscamos si existe OTRO registro con la misma combinación pero distinto ID
@@ -108,10 +134,7 @@ export async function actualizarVehiculoXServicio(
         const data = {
             vehiculoId,
             servicioId,
-            duracion: Number(formData.get("duracionMinutos")),
-            precio: Number(formData.get("precio")),
-            descuento: Number(formData.get("descuento") || 0),
-            senia: Number(formData.get("senia") || 0),
+            ...montos.data,
             updatedAt: new Date()
         };
 
@@ -134,8 +157,9 @@ export async function actualizarVehiculoXServicio(
         };
 
     } catch (error) {
+        console.error("No se pudo actualizar la configuración:", error);
         return {
-            error: error instanceof Error ? error.message : "Error desconocido",
+            error: "No se pudo actualizar la configuración",
             success: false
         };
     }
@@ -145,6 +169,8 @@ export async function deleteVehiculoXServicio(
     prevState: ActionState,
     formData: FormData
 ): Promise<ActionState> {    
+    if (!(await esAdmin())) return NO_AUTORIZADO;
+
     try {
         const id = formData.get("id");
       
@@ -186,8 +212,9 @@ export async function deleteVehiculoXServicio(
         };
 
     } catch (error) {
+        console.error("No se pudo eliminar la configuración:", error);
         return {
-            error: error instanceof Error ? error.message : "Error desconocido",
+            error: "No se pudo eliminar la configuración",
             success: false
         };
     }

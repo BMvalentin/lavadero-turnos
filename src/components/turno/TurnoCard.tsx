@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { deleteTurno, completedTurno } from "@/actions/turno.actions";
 import EditTurnoModal from "./EditarTurnoModal";
 import { Button } from "../ui/button";
+import { formatFechaHora } from "@/lib/fechas";
 
 const initialState = {
     success: false,
@@ -40,7 +41,7 @@ export default function TurnoCard({ session, turno }: { session: any; turno: any
     const [stateComplete, formActionComplete] = useActionState(completedTurno, initialState);
     const [showEditModal, setShowEditModal] = useState(false);
 
-    const formatFecha = (fecha: Date) => new Date(fecha).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const formatFecha = (fecha: Date) => formatFechaHora(fecha);
     const formatPrecio = (precio: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(precio);
 
     const fechaTurno = new Date(turno.horarioReservado);

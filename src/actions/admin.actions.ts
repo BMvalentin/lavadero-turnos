@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";;
 import { serializeData } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
+import { esAdmin } from "@/lib/esAdmin";
 
 /*
   devuelve:
@@ -17,6 +18,8 @@ export async function obtenerTurnos(params: {
   orderBy?: string; 
   orderDir?: "asc" | "desc" 
 }) {
+  if (!(await esAdmin())) throw new Error("No autorizado");
+
   try {
     const { search, orderBy, orderDir = "asc" } = params;
 
@@ -61,6 +64,8 @@ export async function obtenerTurnos(params: {
 
 
 export async function limpiarTurnosAntiguos() {
+  if (!(await esAdmin())) return { success: false, error: "No autorizado" };
+
   try {
     // Calculamos la fecha de hace 2 meses exactos
     const dosMesesAtras = new Date();
@@ -83,6 +88,8 @@ export async function limpiarTurnosAntiguos() {
 }
 
 export async function limpiarTurnosCancelados() {
+  if (!(await esAdmin())) return { success: false, error: "No autorizado" };
+
   try {
     const resultado = await prisma.turno.deleteMany({
       where: {

@@ -13,6 +13,8 @@ export const SITE_TEXT_DEFAULTS = {
     "Creemos que reservar un turno debe ser tan fácil como unos pocos clics. Por eso diseñamos un sistema de reservas ágil y sin complicaciones.",
   DIRECCION: "Av. Montreal 1118, Santa Clara del Mar",
   TELEFONO: "+54 2234 39-8429",
+  // Opcional: enlace de Google Maps (o coordenadas) con la ubicación exacta del local.
+  MAPA_URL: "",
   FOOTER_DESCRIPCION:
     "Lavadero en Santa Clara del Mar. Cuidamos tu vehículo con productos de primera calidad y un sistema de turnos simple y rápido.",
 };
@@ -41,12 +43,27 @@ export const SITE_STYLE_DEFAULTS = {
   COLOR_PRINCIPAL: COLOR_PREDETERMINADO,
 };
 
-export const SITE_CONFIG_DEFAULTS = { ...SITE_TEXT_DEFAULTS, ...SITE_STYLE_DEFAULTS, ...SITE_IMAGE_DEFAULTS };
+// Datos que no se editan directamente: se calculan al guardar otros campos.
+// MAPA_COORDENADAS ("lat,lng") se obtiene de MAPA_URL.
+export const SITE_DERIVED_DEFAULTS = {
+  MAPA_COORDENADAS: "",
+};
+
+export const SITE_CONFIG_DEFAULTS = {
+  ...SITE_TEXT_DEFAULTS,
+  ...SITE_STYLE_DEFAULTS,
+  ...SITE_IMAGE_DEFAULTS,
+  ...SITE_DERIVED_DEFAULTS,
+};
+
+// Textos que se pueden dejar vacíos.
+export const SITE_TEXT_OPCIONALES: SiteTextKey[] = ["MAPA_URL"];
 
 export type SiteTextKey = keyof typeof SITE_TEXT_DEFAULTS;
 export type SiteStyleKey = keyof typeof SITE_STYLE_DEFAULTS;
 export type SiteImageKey = keyof typeof SITE_IMAGE_DEFAULTS;
-export type SiteConfigKey = SiteTextKey | SiteStyleKey | SiteImageKey;
+export type SiteDerivedKey = keyof typeof SITE_DERIVED_DEFAULTS;
+export type SiteConfigKey = SiteTextKey | SiteStyleKey | SiteImageKey | SiteDerivedKey;
 export type SiteConfig = Record<SiteConfigKey, string>;
 
 // Largo máximo de cada texto editable desde Configuración.
@@ -77,9 +94,55 @@ export function numeroWhatsApp(telefono: string): string {
   return digitos;
 }
 
-// Embed de Google Maps a partir de la dirección (no requiere API key).
-export function mapaEmbedUrl(direccion: string): string {
-  return `https://www.google.com/maps?q=${encodeURIComponent(direccion)}&output=embed`;
+// ---------- Mapa ----------
+
+const COORD = String.raw`(-?\d{1,3}(?:\.\d+)?)`;
+
+// Busca coordenadas en un enlace de Google Maps o en un texto "lat, lng".
+// Devuelve "lat,lng" o null si no encuentra.
+export function extraerCoordenadas(texto: string): string | null {
+  let t = texto.trim();
+  try {
+    t = decodeURIComponent(t);
+  } catch {}
+  const patrones = [
+    new RegExp(String.raw`^${COORD}\s*,\s*${COORD}$`), // "-37.83, -57.50"
+    new RegExp(`!3d${COORD}!4d${COORD}`), // pin del lugar en /maps/place/...
+    new RegExp(String.raw`[?&](?:q|query|ll|destination)=${COORD},\s*${COORD}`),
+    new RegExp(`@${COORD},${COORD}`), // centro del mapa
+  ];
+  for (const patron of patrones) {
+    const m = t.match(patron);
+    if (!m) continue;
+    const lat = Number(m[1]);
+    const lng = Number(m[2]);
+    if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return `${lat},${lng}`;
+  }
+  return null;
+}
+
+// Hosts de Google Maps aceptados en el enlace del mapa.
+export function esEnlaceGoogleMaps(url: URL): boolean {
+  const host = url.hostname.toLowerCase();
+  return (
+    host === "maps.app.goo.gl" ||
+    (host === "goo.gl" && url.pathname.startsWith("/maps")) ||
+    /^maps\.google\.[a-z.]+$/.test(host) ||
+    (/^(www\.)?google\.[a-z.]+$/.test(host) && url.pathname.startsWith("/maps"))
+  );
+}
+
+// Embed de Google Maps (no requiere API key). Usa las coordenadas si hay,
+// para mostrar el punto exacto; si no, busca por la dirección.
+export function mapaEmbedUrl(direccion: string, coordenadas?: string): string {
+  return `https://www.google.com/maps?q=${encodeURIComponent(coordenadas || direccion)}&output=embed`;
+}
+
+// Enlace para abrir la ubicación en Google Maps ("Cómo llegar").
+export function mapaLinkUrl(config: Pick<SiteConfig, "DIRECCION" | "MAPA_URL" | "MAPA_COORDENADAS">): string {
+  if (/^https?:\/\//i.test(config.MAPA_URL)) return config.MAPA_URL;
+  const destino = config.MAPA_COORDENADAS || config.DIRECCION;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destino)}`;
 }
 
 // Datos del desarrollador que aparecen en el footer ("Creado por").

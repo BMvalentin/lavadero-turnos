@@ -16,6 +16,16 @@ const transporter = nodemailer.createTransport({
     },
 });
 
+// Los datos del turno (nombre del cliente, etc.) los carga el usuario, así que
+// se escapan antes de meterlos en el HTML del correo.
+const escapeHtml = (texto: string) =>
+    texto
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+
 export interface TurnoDetails {
     cliente: string;
     fecha: string; // Formateada previamente a local
@@ -87,7 +97,7 @@ const getDetallesHtml = (detalles: TurnoDetails) => {
                     <strong style="color: #ffffff; font-size: 14px;">Cliente:</strong>
                 </td>
                 <td align="right" style="padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
-                    <span style="color: #d1d5db; font-size: 14px;">${detalles.cliente}</span>
+                    <span style="color: #d1d5db; font-size: 14px;">${escapeHtml(detalles.cliente)}</span>
                 </td>
             </tr>
             <tr>
@@ -95,7 +105,7 @@ const getDetallesHtml = (detalles: TurnoDetails) => {
                     <strong style="color: #ffffff; font-size: 14px;">Fecha y Hora:</strong>
                 </td>
                 <td align="right" style="padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
-                    <span style="color: #d1d5db; font-size: 14px;">${detalles.fecha}</span>
+                    <span style="color: #d1d5db; font-size: 14px;">${escapeHtml(detalles.fecha)}</span>
                 </td>
             </tr>
             <tr>
@@ -103,7 +113,7 @@ const getDetallesHtml = (detalles: TurnoDetails) => {
                     <strong style="color: #ffffff; font-size: 14px;">Vehículo:</strong>
                 </td>
                 <td align="right" style="padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
-                    <span style="color: #d1d5db; font-size: 14px;">${detalles.vehiculo}</span>
+                    <span style="color: #d1d5db; font-size: 14px;">${escapeHtml(detalles.vehiculo)}</span>
                 </td>
             </tr>
             <tr>
@@ -111,7 +121,7 @@ const getDetallesHtml = (detalles: TurnoDetails) => {
                     <strong style="color: #ffffff; font-size: 14px;">Servicio:</strong>
                 </td>
                 <td align="right" style="padding: 8px 0; ${detalles.precio ? 'border-bottom: 1px solid rgba(255, 255, 255, 0.05);' : ''}">
-                    <span style="color: #d1d5db; font-size: 14px;">${detalles.servicio}</span>
+                    <span style="color: #d1d5db; font-size: 14px;">${escapeHtml(detalles.servicio)}</span>
                 </td>
             </tr>
             ${detalles.precio ? `
@@ -131,7 +141,7 @@ const getDetallesHtml = (detalles: TurnoDetails) => {
 export const enviarCorreoCreacionTurno = async (emailTo: string, detalles: TurnoDetails) => {
     try {
         const titulo = "Turno Confirmado";
-        const mensaje = `Hola <strong>${detalles.cliente}</strong>, tu turno ha sido reservado con éxito. A continuación, te compartimos los detalles de tu reserva.`;
+        const mensaje = `Hola <strong>${escapeHtml(detalles.cliente)}</strong>, tu turno ha sido reservado con éxito. A continuación, te compartimos los detalles de tu reserva.`;
         const detallesHtml = getDetallesHtml(detalles);
         const htmlBody = getBaseEmailTemplate(titulo, mensaje, detallesHtml, '#22c55e'); // border-green-500
 
@@ -150,7 +160,7 @@ export const enviarCorreoCreacionTurno = async (emailTo: string, detalles: Turno
 export const enviarCorreoModificacionTurno = async (emailTo: string, detalles: TurnoDetails) => {
     try {
         const titulo = "Turno Modificado";
-        const mensaje = `Hola <strong>${detalles.cliente}</strong>, te informamos que tu turno ha sido modificado. Aquí tienes los datos actualizados de tu reserva.`;
+        const mensaje = `Hola <strong>${escapeHtml(detalles.cliente)}</strong>, te informamos que tu turno ha sido modificado. Aquí tienes los datos actualizados de tu reserva.`;
         const detallesHtml = getDetallesHtml(detalles);
         const htmlBody = getBaseEmailTemplate(titulo, mensaje, detallesHtml, '#3b82f6'); // border-blue-500
 
@@ -169,7 +179,7 @@ export const enviarCorreoModificacionTurno = async (emailTo: string, detalles: T
 export const enviarCorreoCancelacionTurno = async (emailTo: string, detalles: TurnoDetails) => {
     try {
         const titulo = "Turno Cancelado";
-        const mensaje = `Hola <strong>${detalles.cliente}</strong>, lamentamos informarte que tu turno ha sido cancelado. Esperamos verte pronto de nuevo por aquí.`;
+        const mensaje = `Hola <strong>${escapeHtml(detalles.cliente)}</strong>, lamentamos informarte que tu turno ha sido cancelado. Esperamos verte pronto de nuevo por aquí.`;
         const detallesHtml = getDetallesHtml(detalles);
         const htmlBody = getBaseEmailTemplate(titulo, mensaje, detallesHtml, '#ef4444'); // border-red-500
 

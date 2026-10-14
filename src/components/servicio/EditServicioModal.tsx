@@ -71,7 +71,7 @@ export default function EditServicioModal({ servicio, onClose }: EditServicioMod
                         </Button>
                     </div>
 
-                    <form ref={formRef} action={formAction} encType="multipart/form-data" className="space-y-4">
+                    <form ref={formRef} action={formAction} className="space-y-4">
                         <input type="hidden" name="id" value={servicio.id} />
 
                         <div>

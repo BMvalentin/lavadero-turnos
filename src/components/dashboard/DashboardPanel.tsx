@@ -13,6 +13,7 @@ import { getAllUsers, toggleUserRole, deleteUserAccount } from "@/actions/admin-
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { formatFecha, formatHora } from "@/lib/fechas";
 
 
 // Definición de tipos basada en lo que devuelve action
@@ -27,7 +28,7 @@ export default function DashboardPanel({ user }: { user: any }) {
   useEffect(() => {
     if (activeTab === 'turnos') {
       setLoadingTurnos(true);
-      getUserTurnos(user.id).then((data) => {
+      getUserTurnos().then((data) => {
         setTurnos(data);
         setLoadingTurnos(false);
       });
@@ -169,7 +170,7 @@ export function ProfileForm({ user }: { user: any }) {
     const formData = new FormData(e.currentTarget);
 
     startTransition(async () => {
-      const res = await updateProfile(user.id, formData);
+      const res = await updateProfile(formData);
       
       if (res.success) {
         setStatus('success');
@@ -390,8 +391,8 @@ function TurnoCard({ turno }: { turno: TurnoWithDetails }) {
 
   // Formateo de fecha
   const fecha = new Date(turno.horarioReservado);
-  const dia = fecha.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' });
-  const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  const dia = formatFecha(fecha);
+  const hora = formatHora(fecha);
 
   const handleCancel = () => {
     setShowCancelModal(true);
@@ -416,6 +417,7 @@ function TurnoCard({ turno }: { turno: TurnoWithDetails }) {
         }`}>
           <span className="text-3xl font-bold">{fecha.getDate()}</span>
           <span className="text-sm font-medium uppercase tracking-wider">{fecha.toLocaleDateString('es-AR', { month: 'short' })}</span>
+          <span className="text-xs text-gray-500 mt-1">{dia}</span>
           <div className="mt-2 text-xs font-semibold bg-white/80 px-2 py-1 rounded-full flex items-center gap-1">
              <Clock className="w-3 h-3" /> {hora}
           </div>
@@ -570,7 +572,7 @@ function PasswordForm({ user }: { user: any }) {
     const form = e.currentTarget;
 
     startTransition(async () => {
-      const res = await updatePassword(user.id, formData);
+      const res = await updatePassword(formData);
       if (res.success) {
         setStatus('success');
         setMsg(res.message);
@@ -776,7 +778,7 @@ function AdminUsersPanel({ currentUser }: { currentUser: any }) {
                     <Mail className="w-3 h-3" /> {u.email}
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
-                    Unido el: {new Date(u.createdAt).toLocaleDateString('es-AR')}
+                    Unido el: {formatFecha(u.createdAt)}
                   </p>
                 </div>
                 

@@ -137,7 +137,7 @@ model margenes_laborales {
 model configuracion {
   id    String @default(cuid())
   clave String @unique
-  valor String
+  valor String @db.Text
 }
 
 enum user_role {

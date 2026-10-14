@@ -80,10 +80,10 @@ export default function EditTurnoModal({ session, turno, onClose }: EditTurnoMod
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-                <div className="p-6">
-                    <div className="flex justify-between items-center mb-4">
+        <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50 sm:p-4">
+            <div className="bg-white rounded-t-2xl sm:rounded-lg shadow-xl w-full sm:max-w-lg max-h-[92dvh] flex flex-col">
+                <div className="p-4 sm:p-6 overflow-y-auto overscroll-contain">
+                    <div className="flex justify-between items-center mb-4 sticky -top-4 sm:-top-6 bg-white py-2 z-10">
                         <h2 className="text-xl font-semibold">Editar Turno</h2>
                         <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
                             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -121,14 +121,18 @@ export default function EditTurnoModal({ session, turno, onClose }: EditTurnoMod
                         </div>
                     ) : (
                         <>
-                            <div className="bg-gray-50 rounded-lg p-4 mb-4 space-y-2">
+                            <div className="bg-gray-50 rounded-lg p-3 sm:p-4 mb-4 grid grid-cols-2 gap-3">
                                 {/* Info del cliente y servicio... */}
-                                <p className="text-xs text-gray-500 uppercase">Cliente</p>
-                                <p className="font-semibold">{turno.user.name}</p>
-                                <p className="text-xs text-gray-500 uppercase mt-2">Servicio</p>
-                                <p className="font-semibold">
-                                    {turno.vehiculo_servicio.vehiculo.nombre} - {turno.vehiculo_servicio.servicio.nombre}
-                                </p>
+                                <div className="min-w-0">
+                                    <p className="text-xs text-gray-500 uppercase">Cliente</p>
+                                    <p className="font-semibold truncate">{turno.user.name}</p>
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-xs text-gray-500 uppercase">Servicio</p>
+                                    <p className="font-semibold text-sm">
+                                        {turno.vehiculo_servicio.vehiculo.nombre} - {turno.vehiculo_servicio.servicio.nombre}
+                                    </p>
+                                </div>
                             </div>
 
                             <form ref={formRef} action={formAction} className="space-y-4">
@@ -166,7 +170,7 @@ export default function EditTurnoModal({ session, turno, onClose }: EditTurnoMod
                                     </div>
                                 )}
 
-                                <div className="flex gap-2 pt-4">
+                                <div className="flex gap-2 pt-2 sm:pt-4 sticky -bottom-4 sm:-bottom-6 bg-white py-3">
                                     <Button type="button" variant={"rojo"} onClick={onClose} className="flex-1 px-4 py-2">
                                         Cancelar
                                     </Button>

@@ -7,6 +7,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import LayoutComponent from "@/components/LayoutComponent";
 import ToastProvider from "@/components/toast/ToastProvider";
 import ConfirmProvider from "@/components/confirm/ConfirmContext";
+import SiteConfigProvider from "@/components/providers/SiteConfigProvider";
+import { obtenerSiteConfig } from "@/actions/configuracion.actions";
+import { esColorHex, temaColorCss } from "@/lib/siteConfig";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,31 +21,40 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Chapa Detail - Lavadero Santa Clara",
-  description: "Lavadero de autos - Reserva tu turno en línea de manera fácil y rápida. Santa clara, Buenos Aires.",
-  icons: {
-    icon: "/images/logopng.png",
-    shortcut: "/images/logopng.png",
-    apple: "/images/logopng.png",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { NOMBRE_EMPRESA, LOGO_URL } = await obtenerSiteConfig();
+  return {
+    title: `${NOMBRE_EMPRESA} - Lavadero`,
+    description: `${NOMBRE_EMPRESA} - Reservá tu turno en línea de manera fácil y rápida.`,
+    icons: {
+      icon: LOGO_URL,
+      shortcut: LOGO_URL,
+      apple: LOGO_URL,
+    },
+  };
+}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
+  const siteConfig = await obtenerSiteConfig();
+  const temaCss = temaColorCss(siteConfig.COLOR_PRINCIPAL);
+  const colorLoader = esColorHex(siteConfig.COLOR_PRINCIPAL) ? siteConfig.COLOR_PRINCIPAL : "#6fa9da";
   return (
     <html lang="es" className="h-full">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-full`}>
-        <NextTopLoader color="#6fa9da" showSpinner={true} height={3} zIndex={9999} />
-        <LayoutComponent session={session}>
-          <AppGate>
-            <ToastProvider>
-              <ConfirmProvider>
-                {children}
-              </ConfirmProvider>
-            </ToastProvider>
-          </AppGate>
-        </LayoutComponent>
+        {temaCss && <style>{temaCss}</style>}
+        <NextTopLoader color={colorLoader} showSpinner={true} height={3} zIndex={9999} />
+        <SiteConfigProvider config={siteConfig}>
+          <LayoutComponent session={session}>
+            <AppGate>
+              <ToastProvider>
+                <ConfirmProvider>
+                  {children}
+                </ConfirmProvider>
+              </ToastProvider>
+            </AppGate>
+          </LayoutComponent>
+        </SiteConfigProvider>
       </body>
     </html>
   );

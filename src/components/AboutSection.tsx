@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { Award, Users, Droplets } from "lucide-react";
+import { useSiteConfig } from "@/components/providers/SiteConfigProvider";
 
 const features = [
   {
@@ -21,6 +22,8 @@ const features = [
 ];
 
 export function AboutSection() {
+  const config = useSiteConfig();
+
   return (
     <section id="nosotros" className="py-20 md:py-32 mx-auto px-4">
       <div className="container mx-auto">
@@ -35,14 +38,11 @@ export function AboutSection() {
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">
               Sobre <span className="text-celeste-dark">Nosotros</span>
             </h2>
-            <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
-              Somos un servicio de lavado de vehículos comprometido con la excelencia. 
-              Nuestro objetivo es brindarte una experiencia simple, rápida y de calidad 
-              superior para que tu vehículo luzca impecable.
+            <p className="text-muted-foreground text-lg mb-6 leading-relaxed whitespace-pre-line">
+              {config.NOSOTROS_PARRAFO_1}
             </p>
-            <p className="text-muted-foreground leading-relaxed">
-              Creemos que reservar un turno debe ser tan fácil como unos pocos clics. 
-              Por eso diseñamos un sistema de reservas ágil y sin complicaciones.
+            <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+              {config.NOSOTROS_PARRAFO_2}
             </p>
           </motion.div>
 

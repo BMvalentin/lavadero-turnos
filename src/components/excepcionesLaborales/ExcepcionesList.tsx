@@ -5,6 +5,7 @@ import { deleteExcepcion, softDeleteExcepcion } from "@/actions/excepcionesLabor
 import ExcepcionForm from "./ExcepcionesForm";
 import { Button } from "../ui/button";
 import { useToast } from "@/hooks/useToast";
+import { formatFechaHora } from "@/lib/fechas";
 
 type Excepcion = {
   id: string;
@@ -58,15 +59,7 @@ export default function ExcepcionesList({ excepciones }: ExcepcionesListProps) {
     });
   };
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleString('es-AR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  const formatDate = (date: Date) => formatFechaHora(date);
 
   if (excepciones.length === 0) {
     return (
@@ -104,11 +97,11 @@ export default function ExcepcionesList({ excepciones }: ExcepcionesListProps) {
               />
             </div>
           ) : (
-            <div className="p-6">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">
+            <div className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <h3 className="text-lg font-semibold text-gray-900 break-words">
                       {excepcion.motivo}
                     </h3>
                     <span
@@ -138,11 +131,11 @@ export default function ExcepcionesList({ excepciones }: ExcepcionesListProps) {
                   </div>
                 </div>
 
-                <div className="flex gap-2 ml-4">
+                <div className="grid grid-cols-2 sm:flex gap-2 sm:shrink-0">
                   <Button
                     onClick={() => setEditingId(excepcion.id)}
                     variant={"celeste"}
-                    className="px-3 py-1 text-sm"
+                    className="px-3 py-1 text-sm w-full sm:w-auto"
                     disabled={deletingId === excepcion.id}
                   >
                     Editar
@@ -152,7 +145,7 @@ export default function ExcepcionesList({ excepciones }: ExcepcionesListProps) {
                     <Button
                       onClick={() => handleSoftDelete(excepcion.id)}
                       variant={"amarillo"}
-                      className="px-3 py-1 text-sm"
+                      className="px-3 py-1 text-sm w-full sm:w-auto"
                       disabled={deletingId === excepcion.id}
                     >
                       {deletingId === excepcion.id ? 'Desactivando...' : 'Desactivar'}
@@ -162,7 +155,7 @@ export default function ExcepcionesList({ excepciones }: ExcepcionesListProps) {
                   <Button
                     onClick={() => handleDelete(excepcion.id)}
                     variant={"rojo"}
-                    className="px-3 py-1 text-sm"
+                    className="px-3 py-1 text-sm w-full sm:w-auto"
                     disabled={deletingId === excepcion.id}
                   >
                     {deletingId === excepcion.id ? 'Eliminando...' : 'Eliminar'}

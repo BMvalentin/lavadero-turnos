@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useActionState, useState, useMemo } from "react";
 import { deleteTurno, completedTurno } from "@/actions/turno.actions";
+import { formatFechaHora } from "@/lib/fechas";
 
 // --- Interfaces y Estados Iniciales ---
 const initialState = { success: false, error: undefined, data: undefined };
@@ -119,9 +120,7 @@ export default function ListaTurnos({
                   `}
                 >
                   <td className={`p-3 font-medium`}>
-                    {new Date(turno.horarioReservado).toLocaleString("es-AR", {
-                      day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit",
-                    })}
+                    {formatFechaHora(turno.horarioReservado)}
                   </td>
                   <td className="p-2 text-left">
                     <div className="flex items-center gap-3">

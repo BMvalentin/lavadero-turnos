@@ -9,8 +9,8 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      // Permite subir imágenes de hasta 5 MB (default del framework: 1 MB).
-      bodySizeLimit: "5mb",
+      // Permite guardar logo y banner juntos, de hasta 5 MB cada uno (default del framework: 1 MB).
+      bodySizeLimit: "11mb",
     },
   },
   serverExternalPackages: ['@prisma/client', 'prisma'],

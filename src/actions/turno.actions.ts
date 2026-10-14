@@ -477,6 +477,7 @@ export async function actualizarTurno(
         }
 
         revalidatePath("/turno");
+        revalidatePath("/admin/turno");
 
         // Devolvemos datos limpios para el front
         return {
@@ -682,6 +683,7 @@ export async function completedTurno(
 
         // Revalidamos la ruta para que la lista de turnos se actualice al instante
         revalidatePath("/turno");
+        revalidatePath("/admin/turno");
 
         return {
             success: true,

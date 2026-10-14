@@ -7,8 +7,10 @@ import { useRouter } from "next/navigation";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { User, Mail, Lock, Rocket } from "lucide-react";
 import Image from "next/image";
+import { useSiteConfig } from "@/components/providers/SiteConfigProvider";
 
 export default function RegisterPage() {
+  const { LOGO_URL, NOMBRE_EMPRESA } = useSiteConfig();
   const router = useRouter();
   const [state, action, isPending] = useActionState(registerAction, { error: "", success: false });
 
@@ -23,7 +25,7 @@ export default function RegisterPage() {
       <div className="min-w-[300px] md:min-w-[400px] backdrop-blur-lg bg-linear-to-br from-gray-950/60 to-gray-850/20 border border-white/10 rounded-3xl p-8 shadow-2xl relative">
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/90 mb-4 border border-blue-500/30">
-              <Image src="/images/logopng.png" alt="" width={'64'} height={'64'}/>
+              <Image src={LOGO_URL} alt={`Logo ${NOMBRE_EMPRESA}`} width={64} height={64} className="h-12 w-12 object-contain"/>
           </div>
           <h1 className="text-3xl font-black text-white italic uppercase tracking-tighter">
             Obtén las <span className="text-blue-500">Llaves</span>

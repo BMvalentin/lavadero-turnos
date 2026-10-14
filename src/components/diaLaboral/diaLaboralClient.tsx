@@ -131,7 +131,7 @@ export function DiaLaboralClient({ initialData }: DiaLaboralClientProps) {
       <div className="flex justify-between mb-6">
         <div className="flex flex-row flex-wrap gap-5">
         <Link href="/admin"><Button variant={"celeste"}>Gestionar Turnos</Button></Link>
-        <Link href="/excepcionesLaborales"><Button variant={"rojo"}>Gestionar Feriados</Button></Link>
+        <Link href="/admin/configuracion/feriados"><Button variant={"rojo"}>Gestionar Feriados</Button></Link>
         </div>
         <Button
           onClick={handleCreate}

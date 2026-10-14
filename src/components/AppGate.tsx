@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import CookieModal from "@/components/CookieModal";
 import PrivacyModal from "@/components/PrivacyModal";
 import TermsModal from "@/components/TermsModal";
 import { Footer } from "./Footer";
 
 export default function AppGate({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [acceptedCookies, setAcceptedCookies] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
@@ -84,7 +86,10 @@ export default function AppGate({ children }: { children: React.ReactNode }) {
       {isFullyAccepted && (
         <div className="flex flex-col flex-1">
           <main className="flex-1">{children}</main>
-          <Footer openPrivacy={() => setPrivacyOpen(true)} openTerms={() => setTermsOpen(true)} />
+          {/* El footer sólo se muestra en el inicio */}
+          {pathname === "/" && (
+            <Footer openPrivacy={() => setPrivacyOpen(true)} openTerms={() => setTermsOpen(true)} />
+          )}
         </div>
       )}
     </>

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useEffect, useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,7 +61,7 @@ export function HorariosForm({
   onCancel,
 }: HorariosFormProps) {
   const action = initialData ? updateMargenLaboral : createMargenLaboral;
-  const [state, formAction] = useFormState(action, initialState);
+  const [state, formAction] = useActionState(action, initialState);
 
   // Ya no necesita formatear, la hora ya es string "08:00"
   const formatTimeForInput = (hora: string) => {

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { obtenerHorariosDisponibles, type SlotHorario } from "@/actions/calendario.actions";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
+import FechaInput from "../ui/FechaInput";
+import { formatValorInput } from "@/lib/fechas";
 
 interface Props {
   vehiculoServicioId?: string;
@@ -73,25 +75,24 @@ export default function SeleccionadorHorario({
     : "";
 
   return (
-    <div className="bg-gray-50 border rounded-lg p-4 space-y-4">
+    <div className="bg-gray-50 border rounded-lg p-3 sm:p-4 space-y-4">
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Agenda</h3>
         {horaSeleccionada && (
           <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
-            {fecha.split('-').reverse().slice(0,2).join('/')} a las {horaSeleccionada} hs
+            {formatValorInput(fecha)} a las {horaSeleccionada} hs
           </span>
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         <div>
            <label className="block text-xs font-medium text-gray-500 mb-1.5">Fecha</label>
-           <input 
-              type="date" 
-              className="w-full p-2 border border-gray-200 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+           <FechaInput
+              className="w-full p-2 border border-gray-200 rounded-md text-sm bg-white focus-within:ring-2 focus-within:ring-blue-500"
               value={fecha}
               min={getTodayStr()}
-              onChange={(e) => setFecha(e.target.value)}
+              onChange={(valor) => valor && setFecha(valor)}
            />
         </div>
 
@@ -103,7 +104,7 @@ export default function SeleccionadorHorario({
               ) : loading ? (
                 <div className="h-full flex items-center justify-center text-blue-500 text-xs">Cargando...</div>
               ) : slots.length > 0 ? (
-                <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto pr-1">
+                <div className="grid grid-cols-4 gap-2 max-h-40 sm:max-h-48 overflow-y-auto pr-1">
                   {slots.map((slot) => (
                     <Button
                       key={slot.hora}

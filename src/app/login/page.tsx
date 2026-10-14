@@ -7,8 +7,10 @@ import { useRouter } from "next/navigation";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { Mail, Lock, ChevronRight} from "lucide-react";
 import Image from "next/image";
+import { useSiteConfig } from "@/components/providers/SiteConfigProvider";
 
 export default function LoginPage() {
+  const { LOGO_URL, NOMBRE_EMPRESA } = useSiteConfig();
   const router = useRouter();
   const [state, action, isPending] = useActionState(loginAction, { error: "", success: false });
 
@@ -28,7 +30,7 @@ export default function LoginPage() {
 
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/90 mb-4 border border-blue-500/30">
-            <Image src="/images/logopng.png" alt="" width={'64'} height={'64'}/>
+            <Image src={LOGO_URL} alt={`Logo ${NOMBRE_EMPRESA}`} width={64} height={64} className="h-12 w-12 object-contain"/>
           </div>
           <h1 className="text-3xl font-black text-white tracking-tighter uppercase italic">
             Chapa <span className="text-blue-500">Detail</span>

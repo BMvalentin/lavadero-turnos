@@ -7,7 +7,7 @@ export default function Loading() {
       {/* Círculo de carga con los colores de tu lavadero */}
       <div className="relative flex items-center justify-center">
         {/* Círculo exterior animado */}
-        <div className="h-20 w-20 animate-spin rounded-full border-4 border-gray-200 border-t-[#6fa9da]"></div>
+        <div className="h-20 w-20 animate-spin rounded-full border-4 border-gray-200 border-t-celeste"></div>
         
         {/* Un detalle: icono de auto o punto en el medio */}
         <div className="absolute text-2xl">🚗</div>

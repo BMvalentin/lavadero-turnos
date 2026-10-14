@@ -38,7 +38,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
+  events: {
+    // El registro con contraseña no verifica el email, así que cualquiera podría
+    // registrar el email de otra persona antes que ella. Cuando Google confirma
+    // que el email es de quien inicia sesión, descartamos la contraseña no
+    // verificada para que quien la creó pierda el acceso.
+    async linkAccount({ user, account }) {
+      if (account.provider !== "google" || !user.id) return;
+
+      const dbUser = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { emailVerified: true },
+      });
+      if (!dbUser || dbUser.emailVerified) return;
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: new Date(), password: null },
+      });
+    },
+  },
   callbacks: {
+    async signIn({ account, profile }) {
+      // Solo confiamos en emails que Google marca como verificados.
+      if (account?.provider === "google") {
+        return profile?.email_verified === true;
+      }
+      return true;
+    },
     async jwt({ token, user, trigger, session }) {
 
       if (user) {

@@ -93,7 +93,7 @@ export const createVehiculo = async (
       },
     });
 
-    revalidatePath("/vehiculo");
+    revalidatePath("/admin/vehiculo");
     return { success: true, data: serializeData(nuevoVehiculo) };
   } catch (error) {
     console.error("Error al crear vehículo:", error);
@@ -168,7 +168,7 @@ export const actualizarVehiculo = async (
       },
     });
 
-    revalidatePath("/vehiculo");
+    revalidatePath("/admin/vehiculo");
     return { success: true, data: serializeData(vehiculoActualizado) };
   } catch (error) {
     console.error("Error al actualizar vehículo:", error);
@@ -221,7 +221,7 @@ export const deleteVehiculo = async (prevState: ActionState, formData: FormData)
         updatedAt: new Date()
       }
     });
-    revalidatePath('/vehiculo');
+    revalidatePath("/admin/vehiculo");
 
     return {
       success: true,

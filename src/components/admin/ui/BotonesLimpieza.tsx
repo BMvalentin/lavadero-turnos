@@ -46,7 +46,7 @@ export default function BotonesLimpieza() {
   };
 
   return (
-    <div className="flex gap-3 mt-4 sm:mt-0">
+    <div className="flex gap-3">
       <Button
         variant="rojo"
         onClick={handleLimpiarAntiguos}

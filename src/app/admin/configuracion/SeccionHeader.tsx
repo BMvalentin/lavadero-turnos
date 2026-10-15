@@ -1,5 +1,8 @@
-import EncabezadoPagina from "@/components/panel/EncabezadoPagina";
-
 export default function SeccionHeader({ titulo, descripcion }: { titulo: string; descripcion: string }) {
-    return <EncabezadoPagina titulo={titulo} descripcion={descripcion} />;
+    return (
+        <div className="mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">{titulo}</h1>
+            <p className="text-muted-foreground text-sm">{descripcion}</p>
+        </div>
+    );
 }

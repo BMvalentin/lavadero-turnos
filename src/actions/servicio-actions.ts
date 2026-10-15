@@ -129,7 +129,7 @@ export const createServicio = async (
       },
     });
 
-    revalidatePath("/admin/servicio");
+    revalidatePath("/servicio");
     return { success: true, data: serializeData(nuevoServicio) };
   } catch (error) {
     logServicioError({ operacion: "create-servicio" }, error);
@@ -281,7 +281,7 @@ export const actualizarServicio = async (
     }
   }
 
-  revalidatePath("/admin/servicio");
+  revalidatePath("/servicio");
   return { success: true, data: serializeData(servicioActualizado) };
 };
 
@@ -328,7 +328,7 @@ export const deleteservicio = async (prevState: ActionState, formData: FormData)
         updatedAt: new Date()
       }
     });
-    revalidatePath("/admin/servicio");
+    revalidatePath('/servicio');
 
     return {
       success: true,

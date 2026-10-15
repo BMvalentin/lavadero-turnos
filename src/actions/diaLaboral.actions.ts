@@ -42,7 +42,7 @@ export async function create(
       },
     });
 
-    revalidatePath("/admin/diaLaboral");
+    revalidatePath("/diaLaboral");
 
     return {
       success: true,
@@ -99,7 +99,7 @@ export async function update(
       },
     });
 
-    revalidatePath("/admin/diaLaboral");
+    revalidatePath("/diaLaboral");
 
     return {
       success: true,
@@ -146,7 +146,7 @@ export async function deleteDiaLaboral(id: string): Promise<ActionState> {
       where: { id },
     });
 
-    revalidatePath("/admin/diaLaboral");
+    revalidatePath("/diaLaboral");
 
     return {
       success: true,

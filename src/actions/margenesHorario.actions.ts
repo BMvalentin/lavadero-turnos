@@ -109,7 +109,7 @@ export async function createMargenLaboral(
       },
     });
 
-    revalidatePath("/admin/diaLaboral");
+    revalidatePath("/diaLaboral");
 
     return {
       success: true,
@@ -187,7 +187,7 @@ export async function updateMargenLaboral(
       },
     });
 
-    revalidatePath("/admin/diaLaboral");
+    revalidatePath("/diaLaboral");
 
     return {
       success: true,
@@ -212,7 +212,7 @@ export async function deleteMargenLaboral(id: string): Promise<ActionState> {
       where: { id },
     });
 
-    revalidatePath("/admin/diaLaboral");
+    revalidatePath("/diaLaboral");
 
     return {
       success: true,

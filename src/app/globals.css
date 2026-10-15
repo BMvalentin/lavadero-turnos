@@ -87,21 +87,6 @@
   --sidebar-accent-foreground: 210 30% 15%;
   --sidebar-border: 195 30% 80%;
   --sidebar-ring: 195 45% 65%;
-
-  /* Panel de administración: tokens derivados de la paleta de marca,
-     así siguen el color elegido en Configuración > Apariencia. */
-  --admin-background: color-mix(in srgb, hsl(var(--celeste)) 5%, white);
-  --admin-surface: #ffffff;
-  --admin-surface-elevated: hsl(var(--beige));
-  --admin-hover: hsl(var(--celeste) / 0.1);
-  --admin-border: hsl(var(--celeste) / 0.2);
-  --admin-border-fuerte: hsl(var(--celeste) / 0.45);
-  --admin-texto-primario: hsl(var(--foreground));
-  --admin-texto-secundario: hsl(var(--muted-foreground));
-  --admin-texto-muted: hsl(var(--muted-foreground) / 0.8);
-  --page-primary-tinta: hsl(var(--celeste-dark));
-  --page-primary-15: hsl(var(--celeste) / 0.15);
-  --page-focus-ring: hsl(var(--ring));
 }
 
 /* Colores de marca disponibles como utilidades de Tailwind

@@ -43,16 +43,16 @@ export function Header({ session }: HeaderProps) {
           <nav className="hidden md:flex items-center gap-4 lg:gap-8">
             {role === "ADMIN" ? (
               <>
-                <Link href="/admin/servicio" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/servicio" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   <Button variant="celeste" size="sm">Servicios</Button>
                 </Link>
-                <Link href="/admin/vehiculo" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/vehiculo" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   <Button variant="celeste" size="sm">Vehículos</Button>
                 </Link>
-                <Link href="/admin/vehiculoXServicio" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/vehiculoXServicio" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   <Button variant="celeste" size="sm">Asignar Servicios</Button>
                 </Link>
-                <Link href="/admin/turno" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/turno" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   <Button variant="celeste" size="sm">Crear turnos</Button>
                 </Link>
                 <Link href="/admin" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -142,10 +142,10 @@ export function Header({ session }: HeaderProps) {
               <nav className="flex flex-col gap-4 overflow-y-auto mb-6 flex-1">
                 {role === "ADMIN" ? (
                   <>
-                    <Link href="/admin/servicio" onClick={closeMenu}><Button variant="celeste" className="w-full justify-start">Servicios</Button></Link>
-                    <Link href="/admin/vehiculo" onClick={closeMenu}><Button variant="celeste" className="w-full justify-start">Vehículos</Button></Link>
-                    <Link href="/admin/vehiculoXServicio" onClick={closeMenu}><Button variant="celeste" className="w-full justify-start">Asignar Servicios</Button></Link>
-                    <Link href="/admin/turno" onClick={closeMenu}><Button variant="celeste" className="w-full justify-start">Crear turnos</Button></Link>
+                    <Link href="/servicio" onClick={closeMenu}><Button variant="celeste" className="w-full justify-start">Servicios</Button></Link>
+                    <Link href="/vehiculo" onClick={closeMenu}><Button variant="celeste" className="w-full justify-start">Vehículos</Button></Link>
+                    <Link href="/vehiculoXServicio" onClick={closeMenu}><Button variant="celeste" className="w-full justify-start">Asignar Servicios</Button></Link>
+                    <Link href="/turno" onClick={closeMenu}><Button variant="celeste" className="w-full justify-start">Crear turnos</Button></Link>
                     <Link href="/admin" onClick={closeMenu}><Button variant="celeste" className="w-full justify-start">Panel admin</Button></Link>
                   </>
                 ) : (

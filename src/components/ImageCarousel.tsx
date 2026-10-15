@@ -73,7 +73,7 @@ export function ImageCarousel() {
   const hasEnoughImages = serviciosAMostrar.length >= 3;
 
   return (
-    <section id="servicios" className="py-20 md:py-32 bg-celeste/10 mx-auto px-4">
+    <section id="servicios" className="py-20 md:py-32 bg-secundario mx-auto px-4">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

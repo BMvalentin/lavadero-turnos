@@ -9,7 +9,8 @@ import ToastProvider from "@/components/toast/ToastProvider";
 import ConfirmProvider from "@/components/confirm/ConfirmContext";
 import SiteConfigProvider from "@/components/providers/SiteConfigProvider";
 import { obtenerSiteConfig } from "@/actions/configuracion.actions";
-import { esColorHex, temaColorCss } from "@/lib/siteConfig";
+import { coloresTema } from "@/lib/siteConfig";
+import { esColorHex, temaColorCss } from "@/lib/tema";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   const siteConfig = await obtenerSiteConfig();
-  const temaCss = temaColorCss(siteConfig.COLOR_PRINCIPAL);
+  const temaCss = temaColorCss(coloresTema(siteConfig));
   const colorLoader = esColorHex(siteConfig.COLOR_PRINCIPAL) ? siteConfig.COLOR_PRINCIPAL : "#6fa9da";
   return (
     <html lang="es" className="h-full">

@@ -27,7 +27,7 @@ export function LocationSection() {
     }
   },[])
   return (
-    <section id="ubicacion" className="py-20 md:py-32 bg-celeste/10 justify-center items-center mx-auto max-w-dvw  px-4 overflow-hidden">
+    <section id="ubicacion" className="py-20 md:py-32 bg-secundario justify-center items-center mx-auto max-w-dvw  px-4 overflow-hidden">
       <div className="container justify-around items-center mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

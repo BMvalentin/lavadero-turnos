@@ -6,7 +6,11 @@
 ========================= */
 
 :root {
-  --background: 217, 100%, 95%;
+  /* Colores configurables desde Configuración > Apariencia (lib/tema.ts):
+     el primario define --primary/--celeste*, el secundario --secundario
+     y el fondo --background. Secundario y fondo siempre son claros. */
+  --background: 214 100% 97%;
+  --secundario: 207 69% 94%;
   --foreground: 210 25% 25%;
 
   --card: 43 80% 94%;
@@ -111,6 +115,8 @@
   --color-celeste: hsl(var(--celeste));
   --color-celeste-light: hsl(var(--celeste-light));
   --color-celeste-dark: hsl(var(--celeste-dark));
+  --color-fondo: hsl(var(--background));
+  --color-secundario: hsl(var(--secundario));
 }
 
 /* =========================

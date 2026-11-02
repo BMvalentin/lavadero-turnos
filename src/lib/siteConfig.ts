@@ -1,5 +1,6 @@
 // Textos editables de la web pública. Se guardan en la tabla `configuracion`
 // (clave/valor) y, si una clave no existe todavía, se usa el valor por defecto.
+import { COLORES_TEMA_PREDETERMINADOS, type ColoresTema } from "@/lib/tema";
 
 export const SITE_TEXT_DEFAULTS = {
   NOMBRE_EMPRESA: "Chapa Detail",
@@ -36,12 +37,20 @@ export const SITE_IMAGE_DEFAULTS = {
   BANNER_URL: BANNERS_PREDEFINIDOS[0].url,
 };
 
-// Apariencia: color de la marca en hexadecimal (#rrggbb).
-export const COLOR_PREDETERMINADO = "#7ebace";
-
+// Apariencia: colores del tema en hexadecimal (#rrggbb). Ver lib/tema.ts.
 export const SITE_STYLE_DEFAULTS = {
-  COLOR_PRINCIPAL: COLOR_PREDETERMINADO,
+  COLOR_PRINCIPAL: COLORES_TEMA_PREDETERMINADOS.primario,
+  COLOR_SECUNDARIO: COLORES_TEMA_PREDETERMINADOS.secundario,
+  COLOR_FONDO: COLORES_TEMA_PREDETERMINADOS.fondo,
 };
+
+export function coloresTema(config: Pick<SiteConfig, SiteStyleKey>): ColoresTema {
+  return {
+    primario: config.COLOR_PRINCIPAL,
+    secundario: config.COLOR_SECUNDARIO,
+    fondo: config.COLOR_FONDO,
+  };
+}
 
 // Datos que no se editan directamente: se calculan al guardar otros campos.
 // MAPA_COORDENADAS ("lat,lng") se obtiene de MAPA_URL.
@@ -151,47 +160,3 @@ export const DESARROLLADOR = {
   nombre: "LOGABYTE",
   url: "https://logabyte.com.ar/",
 };
-
-export function esColorHex(valor: string): boolean {
-  return /^#[0-9a-f]{6}$/i.test(valor);
-}
-
-function hexToHsl(hex: string): [number, number, number] {
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const l = (max + min) / 2;
-  let h = 0;
-  let s = 0;
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
-    else if (max === g) h = (b - r) / d + 2;
-    else h = (r - g) / d + 4;
-    h *= 60;
-  }
-  return [Math.round(h), Math.round(s * 100), Math.round(l * 100)];
-}
-
-// Declaraciones CSS de las variables de marca a partir del color principal.
-export function variablesTemaColor(hex: string): string | null {
-  if (!esColorHex(hex)) return null;
-  const [h, s, l] = hexToHsl(hex);
-  const base = `${h} ${s}% ${l}%`;
-  const claro = `${h} ${s}% ${Math.min(l + 15, 92)}%`;
-  const oscuro = `${h} ${s}% ${Math.max(l - 20, 18)}%`;
-  // Texto sobre el color: oscuro si el color es claro, blanco si es oscuro.
-  const texto = l > 55 ? `${h} 30% 15%` : "0 0% 100%";
-  return `--primary:${base};--primary-foreground:${texto};--accent:${base};--ring:${base};--celeste:${base};--celeste-light:${claro};--celeste-dark:${oscuro};--gradient-primary:linear-gradient(135deg,hsl(${base}),hsl(${claro}));`;
-}
-
-// CSS para el layout. Devuelve null con el color predeterminado
-// (se usan los valores de globals.css).
-export function temaColorCss(hex: string): string | null {
-  if (hex.toLowerCase() === COLOR_PREDETERMINADO) return null;
-  const variables = variablesTemaColor(hex);
-  return variables ? `:root{${variables}}` : null;
-}

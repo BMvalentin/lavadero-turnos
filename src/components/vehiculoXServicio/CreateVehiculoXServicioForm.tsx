@@ -101,7 +101,7 @@ export default function CreateVehiculoXServicioForm() {
           {vehiculos.length === 0 && (
             <p>
               • No hay vehículos creados.{" "}
-              <a href="/vehiculo" className="underline">
+              <a href="/admin/vehiculo" className="underline">
                 Crear vehículos
               </a>
             </p>
@@ -109,7 +109,7 @@ export default function CreateVehiculoXServicioForm() {
           {servicios.length === 0 && (
             <p>
               • No hay servicios creados.{" "}
-              <a href="/servicio" className="underline">
+              <a href="/admin/servicio" className="underline">
                 Crear servicios
               </a>
             </p>

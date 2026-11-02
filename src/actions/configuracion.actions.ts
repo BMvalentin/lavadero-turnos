@@ -9,9 +9,9 @@ import {
     SITE_CONFIG_DEFAULTS,
     SITE_CONFIG_KEYS,
     SITE_FORM_KEYS,
+    SITE_STYLE_DEFAULTS,
     SITE_TEXTO_MAX,
     SITE_TEXT_OPCIONALES,
-    esColorHex,
     esEnlaceGoogleMaps,
     extraerCoordenadas,
     numeroWhatsApp,
@@ -20,6 +20,7 @@ import {
     type SiteImageKey,
 } from "@/lib/siteConfig";
 import { deleteImage, getUserFriendlyCloudinaryMessage, uploadImage } from "@/lib/cloudinary";
+import { esColorClaro, esColorHex } from "@/lib/tema";
 
 export type ActionState = {
     error?: string;
@@ -79,9 +80,15 @@ export async function actualizarSiteConfig(
     if (valores.some((v) => v.valor.length > SITE_TEXTO_MAX)) {
         return { error: `Cada texto puede tener hasta ${SITE_TEXTO_MAX} caracteres`, success: false };
     }
-    const color = valores.find((v) => v.clave === "COLOR_PRINCIPAL");
-    if (color && !esColorHex(color.valor)) {
-        return { error: "El color no es válido", success: false };
+    for (const { clave, valor } of valores) {
+        if (!(clave in SITE_STYLE_DEFAULTS)) continue;
+        if (!esColorHex(valor)) {
+            return { error: "El color no es válido", success: false };
+        }
+        // El texto de la web es oscuro: el secundario y el fondo tienen que ser claros.
+        if (clave !== "COLOR_PRINCIPAL" && !esColorClaro(valor)) {
+            return { error: "El color secundario y el de fondo tienen que ser claros", success: false };
+        }
     }
 
     const telefono = valores.find((v) => v.clave === "TELEFONO");

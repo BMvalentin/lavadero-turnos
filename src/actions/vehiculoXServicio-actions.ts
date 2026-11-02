@@ -66,7 +66,7 @@ export async function createVehiculoXServicio(
 
         const vehiculoServicio = await prisma.vehiculo_servicio.create({ data });
 
-        revalidatePath("/vehiculoXServicio");
+        revalidatePath("/admin/vehiculoXServicio");
 
         return {
             success: true,
@@ -149,7 +149,7 @@ export async function actualizarVehiculoXServicio(
             data
         });
 
-        revalidatePath("/vehiculoXServicio");
+        revalidatePath("/admin/vehiculoXServicio");
 
         return {
             success: true,
@@ -204,7 +204,7 @@ export async function deleteVehiculoXServicio(
             }
         });
 
-        revalidatePath("/vehiculoXServicio");
+        revalidatePath("/admin/vehiculoXServicio");
 
         return {
             success: true,

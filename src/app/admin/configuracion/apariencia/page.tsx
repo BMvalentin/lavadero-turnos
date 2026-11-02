@@ -1,5 +1,6 @@
 import { obtenerSiteConfig } from "@/actions/configuracion.actions";
-import ColorForm from "./ColorForm";
+import { coloresTema } from "@/lib/siteConfig";
+import AparienciaForm from "./AparienciaForm";
 import SeccionHeader from "../SeccionHeader";
 
 export const metadata = { title: "Apariencia" };
@@ -9,8 +10,11 @@ export default async function AparienciaPage() {
 
     return (
         <div>
-            <SeccionHeader titulo="Apariencia" descripcion="Color principal de la marca en toda la web." />
-            <ColorForm initialValue={siteConfig.COLOR_PRINCIPAL} />
+            <SeccionHeader
+                titulo="Apariencia"
+                descripcion="Elegí una plantilla o personalizá los tres colores de la marca."
+            />
+            <AparienciaForm initialValues={coloresTema(siteConfig)} nombreEmpresa={siteConfig.NOMBRE_EMPRESA} />
         </div>
     );
 }

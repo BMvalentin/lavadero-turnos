@@ -8,6 +8,7 @@ import {
     LOGO_PREDETERMINADO,
     SITE_CONFIG_DEFAULTS,
     SITE_CONFIG_KEYS,
+    SITE_FLAG_DEFAULTS,
     SITE_FORM_KEYS,
     SITE_STYLE_DEFAULTS,
     SITE_TEXTO_MAX,
@@ -17,6 +18,7 @@ import {
     numeroWhatsApp,
     type SiteConfig,
     type SiteConfigKey,
+    type SiteFlagKey,
     type SiteImageKey,
 } from "@/lib/siteConfig";
 import { deleteImage, getUserFriendlyCloudinaryMessage, uploadImage } from "@/lib/cloudinary";
@@ -120,6 +122,32 @@ export async function actualizarSiteConfig(
         return { success: true };
     } catch (error) {
         console.error("Error al actualizar configuración del sitio:", error);
+        return { error: "Error al guardar la configuración", success: false };
+    }
+}
+
+// ---------- Opciones (activar / desactivar) ----------
+
+export async function actualizarOpcionSitio(clave: SiteFlagKey, activa: boolean): Promise<ActionState> {
+    if (!(await esAdmin())) {
+        return { error: "No autorizado", success: false };
+    }
+    if (!Object.hasOwn(SITE_FLAG_DEFAULTS, clave)) {
+        return { error: "Opción inválida", success: false };
+    }
+
+    const valor = activa ? "1" : "0";
+    try {
+        await prisma.configuracion.upsert({
+            where: { clave },
+            update: { valor },
+            create: { clave, valor },
+        });
+        // Afecta header, inicio, turnos y panel del cliente.
+        revalidatePath("/", "layout");
+        return { success: true };
+    } catch (error) {
+        console.error("Error al actualizar opción del sitio:", error);
         return { error: "Error al guardar la configuración", success: false };
     }
 }

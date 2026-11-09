@@ -14,6 +14,8 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { formatFecha, formatHora } from "@/lib/fechas";
+import { useMostrarPrecios, useSiteConfig } from "@/components/providers/SiteConfigProvider";
+import { opcionActiva } from "@/lib/siteConfig";
 
 
 // Definición de tipos basada en lo que devuelve action
@@ -289,6 +291,8 @@ export function ProfileForm({ user }: { user: any }) {
 }
 
 function TurnosList({ turnos, loading }: { turnos: TurnoWithDetails[], loading: boolean }) {
+  const turnosHabilitados = opcionActiva(useSiteConfig().TURNOS_HABILITADOS);
+
   if (loading) {
     return (
       <div className="flex flex-col gap-4">
@@ -323,7 +327,11 @@ function TurnosList({ turnos, loading }: { turnos: TurnoWithDetails[], loading: 
         </div>
         <h3 className="text-lg font-medium text-gray-900">No tienes turnos</h3>
         <p className="text-gray-500 mb-6">Aún no has reservado ningún servicio.</p>
-        <Link href="/turno"><Button variant="celeste">Reservar Turno</Button></Link>
+        {turnosHabilitados ? (
+          <Link href="/turno"><Button variant="celeste">Reservar Turno</Button></Link>
+        ) : (
+          <p className="text-sm font-medium text-amber-700">La reserva de turnos está pausada por el momento.</p>
+        )}
       </div>
     );
   }
@@ -388,6 +396,7 @@ function TurnoCard({ turno }: { turno: TurnoWithDetails }) {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const router = useRouter();
+  const mostrarPrecios = useMostrarPrecios();
 
   // Formateo de fecha
   const fecha = new Date(turno.horarioReservado);
@@ -454,8 +463,12 @@ function TurnoCard({ turno }: { turno: TurnoWithDetails }) {
           
           <div className="flex items-center justify-between mt-4 text-sm">
              <div className="flex gap-4 text-gray-500">
-               <span>Seña: ${turno.seniaCongelada}</span>
-               <span className="font-semibold text-gray-900">Total: ${turno.precioCongelado}</span>
+               {mostrarPrecios && (
+                 <>
+                   <span>Seña: ${turno.seniaCongelada}</span>
+                   <span className="font-semibold text-gray-900">Total: ${turno.precioCongelado}</span>
+                 </>
+               )}
              </div>
              
              {turnoEstado !== 0 && turnoEstado !== 2 && (

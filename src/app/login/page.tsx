@@ -8,9 +8,11 @@ import AuthLayout from "@/components/auth/AuthLayout";
 import { Mail, Lock, ChevronRight} from "lucide-react";
 import Image from "next/image";
 import { useSiteConfig } from "@/components/providers/SiteConfigProvider";
+import { splitNombreEmpresa } from "@/lib/siteConfig";
 
 export default function LoginPage() {
   const { LOGO_URL, NOMBRE_EMPRESA } = useSiteConfig();
+  const [nombreInicio, nombreFin] = splitNombreEmpresa(NOMBRE_EMPRESA);
   const router = useRouter();
   const [state, action, isPending] = useActionState(loginAction, { error: "", success: false });
 
@@ -26,14 +28,14 @@ export default function LoginPage() {
       <div className="min-w-[300px] md:min-w-[400px] backdrop-blur-lg bg-linear-to-br from-gray-950/60 to-gray-850/20 border border-white/10 rounded-3xl p-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden group">
         
         {/* Glow en el borde superior */}
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
 
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/90 mb-4 border border-blue-500/30">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/90 mb-4 border border-primary/30">
             <Image src={LOGO_URL} alt={`Logo ${NOMBRE_EMPRESA}`} width={64} height={64} className="h-12 w-12 object-contain"/>
           </div>
           <h1 className="text-3xl font-black text-white tracking-tighter uppercase italic">
-            Chapa <span className="text-blue-500">Detail</span>
+            {nombreInicio}{nombreInicio && " "}<span className="text-celeste-light">{nombreFin}</span>
           </h1>
           <p className="text-gray-400 text-sm mt-2">Ingresa a tu cuenta</p>
         </div>
@@ -51,7 +53,7 @@ export default function LoginPage() {
 
         <form action={action} className="space-y-5">
           <div className="space-y-1">
-            <label className="text-xs font-bold text-blue-400 uppercase ml-1 tracking-widest">Email</label>
+            <label className="text-xs font-bold text-celeste-light uppercase ml-1 tracking-widest">Email</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
               <input 
@@ -59,13 +61,13 @@ export default function LoginPage() {
                 type="email" 
                 placeholder="piloto@auto.com"
                 required 
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-gray-600"
+                className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-gray-600"
               />
             </div>
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-blue-400 uppercase ml-1 tracking-widest">Contraseña</label>
+            <label className="text-xs font-bold text-celeste-light uppercase ml-1 tracking-widest">Contraseña</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
               <input 
@@ -73,7 +75,7 @@ export default function LoginPage() {
                 type="password" 
                 placeholder="••••••••"
                 required 
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-gray-600"
+                className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-gray-600"
               />
             </div>
           </div>
@@ -87,7 +89,7 @@ export default function LoginPage() {
           <button 
             type="submit" 
             disabled={isPending}
-            className="w-full group relative bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl transition-all overflow-hidden active:scale-[0.98] disabled:opacity-50"
+            className="w-full group relative bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_20px_hsl(var(--primary)/0.4)] font-black py-4 rounded-xl transition-all overflow-hidden active:scale-[0.98] disabled:opacity-50"
           >
             <div className="relative z-10 flex items-center justify-center gap-2 uppercase tracking-tighter text-lg">
               {isPending ? "Iniciando..." : "Iniciar Sesión"}
@@ -99,7 +101,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-8">
-          ¿No tienes cuenta? <Link href="/register" className="text-blue-400 hover:text-blue-300 font-bold underline-offset-4 hover:underline">Registrarse</Link>
+          ¿No tienes cuenta? <Link href="/register" className="text-celeste-light hover:text-white font-bold underline-offset-4 hover:underline">Registrarse</Link>
         </p>
       </div>
     </AuthLayout>

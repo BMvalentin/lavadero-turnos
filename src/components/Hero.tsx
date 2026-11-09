@@ -5,6 +5,7 @@ import { Sparkles, Clock, Shield} from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSiteConfig } from "@/components/providers/SiteConfigProvider";
+import { opcionActiva } from "@/lib/siteConfig";
 
 interface HeroProps {
   onBookingClick: () => void;
@@ -56,11 +57,17 @@ export function Hero({ onBookingClick }: HeroProps) {
             transition={{ duration: 0.6, delay: 0.5 }}
             className="flex flex-col sm:flex-row gap-4 mb-12"
           >
-            <Link href="/turno">
-              <Button variant="celeste" size="lg">
-                Reservar Turno Ahora
+            {opcionActiva(config.TURNOS_HABILITADOS) ? (
+              <Link href="/turno">
+                <Button variant="celeste" size="lg">
+                  Reservar Turno Ahora
+                </Button>
+              </Link>
+            ) : (
+              <Button variant="celeste" size="lg" disabled title="La reserva de turnos está pausada por el momento">
+                Reservas pausadas
               </Button>
-            </Link>
+            )}
             <Button variant="blanco" asChild>
               <Link href="#servicios">Ver Servicios</Link>
             </Button>

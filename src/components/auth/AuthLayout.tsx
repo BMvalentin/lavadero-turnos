@@ -16,12 +16,12 @@ export default function AuthLayout({ children }: AuthProps) {
             minHeight: "100vh",
         }}>
       {/* Luces de neón de fondo (Efecto velocidad) */}
-      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px] animate-pulse" />
+      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-primary/20 rounded-full blur-[120px] animate-pulse" />
       <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px]" />
       
       {/* Líneas de carretera abstractas */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
-        <div className="absolute top-1/2 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500 to-transparent" />
+        <div className="absolute top-1/2 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary to-transparent" />
       </div>
 
       <motion.div 

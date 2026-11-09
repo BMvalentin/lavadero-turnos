@@ -9,6 +9,7 @@ import { useFormStatus } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../ui/button";
 import { useToast } from "@/hooks/useToast";
+import { useMostrarPrecios } from "@/components/providers/SiteConfigProvider";
 
 const initialState = {
   success: false,
@@ -27,6 +28,8 @@ type Servicio = {
 };
 
 export default function CreateVehiculoXServicioForm() {
+  // Con los precios ocultos (Configuración > Turnos y precios) se guardan en 0.
+  const mostrarPrecios = useMostrarPrecios();
   const [state, formAction] = useActionState(
     createVehiculoXServicio,
     initialState
@@ -189,6 +192,7 @@ export default function CreateVehiculoXServicioForm() {
             />
           </div>
 
+          {mostrarPrecios ? (
           <div>
             <label
               htmlFor="precio"
@@ -207,8 +211,16 @@ export default function CreateVehiculoXServicioForm() {
               placeholder="5000"
             />
           </div>
+          ) : (
+            <>
+              <input type="hidden" name="precio" value="0" />
+              <input type="hidden" name="descuento" value="0" />
+              <input type="hidden" name="senia" value="0" />
+            </>
+          )}
         </div>
 
+        {mostrarPrecios && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label
@@ -248,6 +260,7 @@ export default function CreateVehiculoXServicioForm() {
             />
           </div>
         </div>
+        )}
 
         <SubmitButton />
       </form>

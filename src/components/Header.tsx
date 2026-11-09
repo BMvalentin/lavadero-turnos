@@ -70,6 +70,9 @@ export function Header({ session }: HeaderProps) {
                 <Link href="/#ubicacion" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   <Button variant="link" size="sm">Ubicación</Button>
                 </Link>
+                <Link href="/asesoramiento" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  <Button variant="link" size="sm">Asesoramiento</Button>
+                </Link>
                 <Link href={session ? "/turno" : "/login"} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   <Button variant="celeste" size="sm">Turnos</Button>
                 </Link>
@@ -91,7 +94,7 @@ export function Header({ session }: HeaderProps) {
               </>
             ) : (
               <Link href="/login">
-                <Button variant="amarillo" size="sm">
+                <Button variant="default" size="sm">
                   <DoorOpen className="w-4 h-4 mr-2" /> Iniciar Sesión
                 </Button>
               </Link>
@@ -153,6 +156,7 @@ export function Header({ session }: HeaderProps) {
                     <Link href="/#servicios" onClick={closeMenu}><Button variant="outline" className="w-full justify-start">Servicios</Button></Link>
                     <Link href="/#nosotros" onClick={closeMenu}><Button variant="outline" className="w-full justify-start">Nosotros</Button></Link>
                     <Link href="/#ubicacion" onClick={closeMenu}><Button variant="outline" className="w-full justify-start">Ubicación</Button></Link>
+                    <Link href="/asesoramiento" onClick={closeMenu}><Button variant="outline" className="w-full justify-start">Asesoramiento</Button></Link>
                     <Link href={session ? "/turno" : "/login"} onClick={closeMenu}><Button variant="celeste" className="w-full justify-start">Turnos</Button></Link>
                   </>
                 )}
@@ -172,7 +176,7 @@ export function Header({ session }: HeaderProps) {
                   </>
                 ) : (
                   <Link href="/login" onClick={closeMenu}>
-                    <Button variant="amarillo" className="w-full">
+                    <Button variant="default" className="w-full">
                       <DoorOpen className="w-4 h-4 mr-2" /> Iniciar Sesión
                     </Button>
                   </Link>

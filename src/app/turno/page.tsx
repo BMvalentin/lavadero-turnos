@@ -4,11 +4,16 @@ import CreateTurnoForm from "@/components/turno/CreateTurnoForm";
 import { Suspense } from "react";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { obtenerSiteConfig } from "@/actions/configuracion.actions";
+import { opcionActiva } from "@/lib/siteConfig";
+import TurnosDeshabilitadosAviso from "@/components/turno/TurnosDeshabilitadosAviso";
 
 export default async function TurnoPage() {
   const session = await auth();
   if (!session?.user) { redirect("/login"); }
   const result = (session?.user.role === "ADMIN") ? await getTurnos() : await getTurnos({ userId: session?.user.id });
+  const { TURNOS_HABILITADOS, TELEFONO } = await obtenerSiteConfig();
+  const puedeReservar = session.user.role === "ADMIN" || opcionActiva(TURNOS_HABILITADOS);
 
   return (
     <div className="container mx-auto p-6 max-w-7xl mt-20">
@@ -17,7 +22,7 @@ export default async function TurnoPage() {
       </div>
 
       <div className="mb-8">
-        <CreateTurnoForm session={session} />
+        {puedeReservar ? <CreateTurnoForm session={session} /> : <TurnosDeshabilitadosAviso telefono={TELEFONO} />}
       </div>
 
       <Suspense fallback={<LoadingSkeleton />}>

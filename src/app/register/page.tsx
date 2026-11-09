@@ -24,13 +24,13 @@ export default function RegisterPage() {
     <AuthLayout>
       <div className="min-w-[300px] md:min-w-[400px] backdrop-blur-lg bg-linear-to-br from-gray-950/60 to-gray-850/20 border border-white/10 rounded-3xl p-8 shadow-2xl relative">
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/90 mb-4 border border-blue-500/30">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/90 mb-4 border border-primary/30">
               <Image src={LOGO_URL} alt={`Logo ${NOMBRE_EMPRESA}`} width={64} height={64} className="h-12 w-12 object-contain"/>
           </div>
           <h1 className="text-3xl font-black text-white italic uppercase tracking-tighter">
-            Obtén las <span className="text-blue-500">Llaves</span>
+            Obtén las <span className="text-celeste-light">Llaves</span>
           </h1>
-          <p className="text-gray-400 text-sm mt-1">Regístrate en la red exclusiva de chapa detail</p>
+          <p className="text-gray-400 text-sm mt-1">Regístrate en la red exclusiva de {NOMBRE_EMPRESA}</p>
         </div>
 
         <div className="space-y-3 mb-6">
@@ -49,13 +49,13 @@ export default function RegisterPage() {
             {/* Input Nombre */}
             <div className="space-y-1">
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500/50" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-celeste-light/60" />
                 <input
                   name="name"
                   type="text"
                   placeholder="Nombre Completo"
                   required
-                  className="w-full bg-black/20 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-white focus:border-blue-500 transition-all"
+                  className="w-full bg-black/20 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-white focus:border-primary transition-all"
                 />
               </div>
             </div>
@@ -63,13 +63,13 @@ export default function RegisterPage() {
             {/* Input Email */}
             <div className="space-y-1">
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500/50" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-celeste-light/60" />
                 <input
                   name="email"
                   type="email"
                   placeholder="Correo de contacto"
                   required
-                  className="w-full bg-black/20 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-white focus:border-blue-500 transition-all"
+                  className="w-full bg-black/20 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-white focus:border-primary transition-all"
                 />
               </div>
             </div>
@@ -77,13 +77,13 @@ export default function RegisterPage() {
             {/* Input Password */}
             <div className="space-y-1">
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500/50" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-celeste-light/60" />
                 <input
                   name="password"
                   type="password"
                   placeholder="Contraseña"
                   required
-                  className="w-full bg-black/20 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-white focus:border-blue-500 transition-all"
+                  className="w-full bg-black/20 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-white focus:border-primary transition-all"
                 />
               </div>
             </div>
@@ -98,7 +98,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={isPending}
-            className="w-full bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-600 hover:to-blue-400 text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(59,130,246,0.4)] transition-all flex items-center justify-center gap-3 uppercase italic"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-black py-4 rounded-xl shadow-[0_0_20px_hsl(var(--primary)/0.4)] transition-all flex items-center justify-center gap-3 uppercase italic"
           >
             {isPending ? "Procesando..." : (
               <>
@@ -112,7 +112,7 @@ export default function RegisterPage() {
         <div className="text-center mt-6">
           <p className="text-xs text-gray-500 uppercase tracking-widest">
             ¿Ya eres miembro?{" "}
-            <Link href="/login" className="text-blue-500 font-black hover:text-blue-400 transition-colors">
+            <Link href="/login" className="text-celeste-light font-black hover:text-white transition-colors">
               Log In
             </Link>
           </p>

@@ -58,6 +58,21 @@ export default function CreateServicioForm() {
                 </div>
 
                 <div>
+                    <label htmlFor="descripcion" className="block text-sm font-medium mb-1">
+                        Descripción (opcional)
+                    </label>
+                    <textarea
+                        id="descripcion"
+                        name="descripcion"
+                        rows={5}
+                        maxLength={3000}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                        placeholder="En qué áreas del vehículo se hace, cómo se realiza el trabajo, qué productos se usan..."
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Se muestra en la página de Asesoramiento.</p>
+                </div>
+
+                <div>
                     <label htmlFor="srcImage" className="block text-sm font-medium mb-1">
                         Imagen del servicio
                     </label>

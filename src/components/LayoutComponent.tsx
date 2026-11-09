@@ -3,6 +3,7 @@ import { usePathname } from "next/navigation";
 import { Header } from "@/components/Header";
 import { BookingProvider } from "@/app/context/Booking";
 import SessionWrapper from "./providers/SessionWrapper";
+import { WhatsAppFlotante } from "./WhatsAppFlotante";
 
 export default function LayoutComponent({
   children,
@@ -19,6 +20,7 @@ export default function LayoutComponent({
       <BookingProvider session={session}>
          {!esPanelAdmin && <Header session={session} />}
          {children}
+         {!esPanelAdmin && <WhatsAppFlotante />}
       </BookingProvider>
     </SessionWrapper>
   );

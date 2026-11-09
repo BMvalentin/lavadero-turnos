@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import SeleccionadorHorario from "./SeleccionadorHorario";
 import { Button } from "../ui/button";
+import { useMostrarPrecios } from "@/components/providers/SiteConfigProvider";
 
 type VehiculoServicioData = {
     id: string;
@@ -81,6 +82,7 @@ export default function CreateTurnoForm({ session }: { session: any }) {
     );
     const [whatsappLink, setWhatsappLink] = useState<string | null>(null);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const mostrarPrecios = useMostrarPrecios();
 
     useEffect(() => {
         let isMounted = true;
@@ -214,7 +216,7 @@ export default function CreateTurnoForm({ session }: { session: any }) {
                             <option value="">-- Seleccionar Vehículo y Servicio --</option>
                             {configuraciones.map(c => (
                                 <option key={c.id} value={c.id}>
-                                    {c.vehiculo.nombre} | {c.servicio.nombre} — ${c.precio}
+                                    {c.vehiculo.nombre} | {c.servicio.nombre}{mostrarPrecios && ` — $${c.precio}`}
                                 </option>
                             ))}
                         </select>

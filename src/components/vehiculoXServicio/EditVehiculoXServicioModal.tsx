@@ -7,6 +7,7 @@ import { useFormStatus } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../ui/button";
 import { useToast } from "@/hooks/useToast";
+import { useMostrarPrecios } from "@/components/providers/SiteConfigProvider";
 
 const initialState = {
   success: false,
@@ -51,6 +52,8 @@ export default function EditVehiculoXServicioModal({
   item,
   onClose,
 }: EditVehiculoXServicioModalProps) {
+  // Con los precios ocultos se reenvían los valores actuales para no perderlos.
+  const mostrarPrecios = useMostrarPrecios();
   const [state, formAction] = useActionState(
     actualizarVehiculoXServicio,
     initialState
@@ -185,6 +188,7 @@ export default function EditVehiculoXServicioModal({
                   />
                 </div>
 
+                {mostrarPrecios ? (
                 <div>
                   <label
                     htmlFor="precio"
@@ -203,8 +207,16 @@ export default function EditVehiculoXServicioModal({
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
+                ) : (
+                  <>
+                    <input type="hidden" name="precio" value={item.precio} />
+                    <input type="hidden" name="descuento" value={item.descuento} />
+                    <input type="hidden" name="senia" value={item.senia} />
+                  </>
+                )}
               </div>
 
+              {mostrarPrecios && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label
@@ -242,6 +254,7 @@ export default function EditVehiculoXServicioModal({
                   />
                 </div>
               </div>
+              )}
 
               <div className="flex gap-2 pt-4">
                 <Button

@@ -15,6 +15,7 @@ type Servicio = {
     id: string;
     nombre: string | null;
     srcImage: string | null;
+    descripcion?: string | null;
     estado: boolean;
 };
 
@@ -56,7 +57,7 @@ export default function EditServicioModal({ servicio, onClose }: EditServicioMod
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-xl font-semibold">Editar Servicio</h2>
@@ -86,6 +87,21 @@ export default function EditServicioModal({ servicio, onClose }: EditServicioMod
                                 defaultValue={servicio.nombre || ""}
                                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 placeholder="Ej: Lavado completo"
+                            />
+                        </div>
+
+                        <div>
+                            <label htmlFor="descripcion" className="block text-sm font-medium mb-1">
+                                Descripción (opcional)
+                            </label>
+                            <textarea
+                                id="descripcion"
+                                name="descripcion"
+                                rows={5}
+                                maxLength={3000}
+                                defaultValue={servicio.descripcion || ""}
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                                placeholder="En qué áreas del vehículo se hace, cómo se realiza el trabajo, qué productos se usan..."
                             />
                         </div>
 

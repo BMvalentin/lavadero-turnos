@@ -6,6 +6,8 @@ import { deleteTurno, completedTurno } from "@/actions/turno.actions";
 import EditTurnoModal from "./EditarTurnoModal";
 import { Button } from "../ui/button";
 import { formatFechaHora } from "@/lib/fechas";
+import { useMostrarPrecios, useSiteConfig } from "@/components/providers/SiteConfigProvider";
+import { opcionActiva } from "@/lib/siteConfig";
 
 const initialState = {
     success: false,
@@ -40,6 +42,11 @@ export default function TurnoCard({ session, turno }: { session: any; turno: any
     const [state, formAction] = useActionState(deleteTurno, initialState);
     const [stateComplete, formActionComplete] = useActionState(completedTurno, initialState);
     const [showEditModal, setShowEditModal] = useState(false);
+    const config = useSiteConfig();
+    const esAdmin = session?.user.role === "ADMIN";
+    const mostrarPrecios = useMostrarPrecios();
+    // Con la reserva desactivada, el cliente no puede reprogramar (sí cancelar).
+    const puedeEditar = esAdmin || opcionActiva(config.TURNOS_HABILITADOS);
 
     const formatFecha = (fecha: Date) => formatFechaHora(fecha);
     const formatPrecio = (precio: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(precio);
@@ -90,6 +97,7 @@ export default function TurnoCard({ session, turno }: { session: any; turno: any
                         <p className="font-semibold text-gray-800">{turno.vehiculo_servicio.vehiculo.nombre} - {turno.vehiculo_servicio.servicio.nombre}</p>
                     </div>
 
+                    {mostrarPrecios && (
                     <div className="border-t pt-3 grid grid-cols-2 gap-2">
                         <div>
                             <p className="text-xs text-gray-500 uppercase">Precio Total</p>
@@ -102,6 +110,7 @@ export default function TurnoCard({ session, turno }: { session: any; turno: any
                             </div>
                         )}
                     </div>
+                    )}
 
                     <div className="flex gap-2 pt-3">
                         {session?.user.role === "ADMIN" && isPasado && (
@@ -110,7 +119,9 @@ export default function TurnoCard({ session, turno }: { session: any; turno: any
                                 <Button type="submit" variant="verde" className="flex-1 text-sm">Completar</Button>
                             </form>
                         )}
-                        <Button onClick={() => setShowEditModal(true)} variant="celeste" className="flex-1 text-sm">Editar</Button>
+                        {puedeEditar && (
+                            <Button onClick={() => setShowEditModal(true)} variant="celeste" className="flex-1 text-sm">Editar</Button>
+                        )}
                         <form action={formAction}>
                             <input type="hidden" name="id" value={turno.id} />
                             <Button type="submit" variant="rojo" className="text-sm">Cancelar</Button>

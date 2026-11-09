@@ -7,7 +7,7 @@ import { addMinutes } from "date-fns";
 import { serializeData } from "@/lib/utils";
 import { enviarCorreoCreacionTurno, enviarCorreoModificacionTurno, enviarCorreoCancelacionTurno, TurnoDetails } from "@/lib/mail";
 import { obtenerSiteConfig } from "./configuracion.actions";
-import { numeroWhatsApp } from "@/lib/siteConfig";
+import { numeroWhatsApp, opcionActiva } from "@/lib/siteConfig";
 import { usuarioActual } from "@/lib/esAdmin";
 import { horarioReservadoSchema, patenteSchema } from "@/lib/zod";
 
@@ -20,6 +20,16 @@ export type ActionState = {
 };
 
 const NO_AUTORIZADO: ActionState = { error: "No autorizado", success: false };
+
+const MENSAJE_TURNOS_DESHABILITADOS =
+    "La reserva de turnos está deshabilitada por el momento. Intentá más tarde o comunicate con el lavadero.";
+
+// El admin puede desactivar la reserva de turnos (Configuración > Turnos y precios).
+// Mientras tanto los clientes no pueden crear ni reprogramar turnos; el admin sí.
+async function turnosHabilitados(): Promise<boolean> {
+    const { TURNOS_HABILITADOS } = await obtenerSiteConfig();
+    return opcionActiva(TURNOS_HABILITADOS);
+}
 
 type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
@@ -66,6 +76,9 @@ export async function createTurno(
 ): Promise<ActionState> {
     const actual = await usuarioActual();
     if (!actual) return NO_AUTORIZADO;
+    if (!actual.esAdmin && !(await turnosHabilitados())) {
+        return { error: MENSAJE_TURNOS_DESHABILITADOS, success: false };
+    }
 
     try {
         const vehiculoServicioId = formData.get("vehiculoServicioId") as string;
@@ -301,6 +314,9 @@ export async function actualizarTurno(
 ): Promise<ActionState> {
     const actual = await usuarioActual();
     if (!actual) return NO_AUTORIZADO;
+    if (!actual.esAdmin && !(await turnosHabilitados())) {
+        return { error: MENSAJE_TURNOS_DESHABILITADOS, success: false };
+    }
 
     try {
         const id = formData.get("id") as string;

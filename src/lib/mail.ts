@@ -1,4 +1,6 @@
 import nodemailer from 'nodemailer';
+import { obtenerSiteConfig } from '@/actions/configuracion.actions';
+import { opcionActiva } from '@/lib/siteConfig';
 
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
 const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587');
@@ -25,6 +27,12 @@ const escapeHtml = (texto: string) =>
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
+
+// Si el admin ocultó los precios, el correo al cliente tampoco los muestra.
+async function sinPrecioSiEstaOculto(detalles: TurnoDetails): Promise<TurnoDetails> {
+    const { MOSTRAR_PRECIOS } = await obtenerSiteConfig();
+    return opcionActiva(MOSTRAR_PRECIOS) ? detalles : { ...detalles, precio: undefined };
+}
 
 export interface TurnoDetails {
     cliente: string;
@@ -142,7 +150,7 @@ export const enviarCorreoCreacionTurno = async (emailTo: string, detalles: Turno
     try {
         const titulo = "Turno Confirmado";
         const mensaje = `Hola <strong>${escapeHtml(detalles.cliente)}</strong>, tu turno ha sido reservado con éxito. A continuación, te compartimos los detalles de tu reserva.`;
-        const detallesHtml = getDetallesHtml(detalles);
+        const detallesHtml = getDetallesHtml(await sinPrecioSiEstaOculto(detalles));
         const htmlBody = getBaseEmailTemplate(titulo, mensaje, detallesHtml, '#22c55e'); // border-green-500
 
         await transporter.sendMail({
@@ -161,7 +169,7 @@ export const enviarCorreoModificacionTurno = async (emailTo: string, detalles: T
     try {
         const titulo = "Turno Modificado";
         const mensaje = `Hola <strong>${escapeHtml(detalles.cliente)}</strong>, te informamos que tu turno ha sido modificado. Aquí tienes los datos actualizados de tu reserva.`;
-        const detallesHtml = getDetallesHtml(detalles);
+        const detallesHtml = getDetallesHtml(await sinPrecioSiEstaOculto(detalles));
         const htmlBody = getBaseEmailTemplate(titulo, mensaje, detallesHtml, '#3b82f6'); // border-blue-500
 
         await transporter.sendMail({
@@ -180,7 +188,7 @@ export const enviarCorreoCancelacionTurno = async (emailTo: string, detalles: Tu
     try {
         const titulo = "Turno Cancelado";
         const mensaje = `Hola <strong>${escapeHtml(detalles.cliente)}</strong>, lamentamos informarte que tu turno ha sido cancelado. Esperamos verte pronto de nuevo por aquí.`;
-        const detallesHtml = getDetallesHtml(detalles);
+        const detallesHtml = getDetallesHtml(await sinPrecioSiEstaOculto(detalles));
         const htmlBody = getBaseEmailTemplate(titulo, mensaje, detallesHtml, '#ef4444'); // border-red-500
 
         await transporter.sendMail({

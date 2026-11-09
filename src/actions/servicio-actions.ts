@@ -39,6 +39,17 @@ function logServicioError(context: ServicioErrorContext, error: unknown): void {
   });
 }
 
+// Descripción del servicio (opcional) que se muestra en Asesoramiento.
+const DESCRIPCION_MAX = 3000;
+
+function leerDescripcion(formData: FormData): { descripcion: string | null } | { error: string } {
+  const valor = String(formData.get("descripcion") ?? "").trim();
+  if (valor.length > DESCRIPCION_MAX) {
+    return { error: `La descripción puede tener hasta ${DESCRIPCION_MAX} caracteres` };
+  }
+  return { descripcion: valor === "" ? null : valor };
+}
+
 export const getServicios = async (): Promise<ActionState> => {
   try {
     const servicio = await prisma.servicio.findMany({
@@ -84,6 +95,9 @@ export const createServicio = async (
     return { error: "El nombre del servicio es requerido", success: false };
   }
 
+  const leida = leerDescripcion(formData);
+  if ("error" in leida) return { error: leida.error, success: false };
+
   const nuevaImagen = file && file.size > 0 ? file : null;
   const tieneImagen = nuevaImagen !== null;
   const archivo = nuevaImagen
@@ -123,6 +137,7 @@ export const createServicio = async (
         nombre: nombre.trim(),
         srcImage: secure_url,
         cloudinaryPublicId: public_id,
+        descripcion: leida.descripcion,
         estado,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -130,6 +145,8 @@ export const createServicio = async (
     });
 
     revalidatePath("/admin/servicio");
+
+    revalidatePath("/asesoramiento");
     return { success: true, data: serializeData(nuevoServicio) };
   } catch (error) {
     logServicioError({ operacion: "create-servicio" }, error);
@@ -166,6 +183,9 @@ export const actualizarServicio = async (
   if (!nombre || nombre.trim() === "") {
     return { error: "El nombre del servicio es requerido", success: false };
   }
+
+  const leida = leerDescripcion(formData);
+  if ("error" in leida) return { error: leida.error, success: false };
 
   let servicioExistente: {
     id: string;
@@ -234,6 +254,7 @@ export const actualizarServicio = async (
         nombre: nombre.trim(),
         srcImage: secure_url,
         cloudinaryPublicId: public_id,
+        descripcion: leida.descripcion,
         estado,
         updatedAt: new Date(),
       },
@@ -282,6 +303,8 @@ export const actualizarServicio = async (
   }
 
   revalidatePath("/admin/servicio");
+
+  revalidatePath("/asesoramiento");
   return { success: true, data: serializeData(servicioActualizado) };
 };
 
@@ -329,6 +352,7 @@ export const deleteservicio = async (prevState: ActionState, formData: FormData)
       }
     });
     revalidatePath("/admin/servicio");
+    revalidatePath("/asesoramiento");
 
     return {
       success: true,
@@ -341,6 +365,41 @@ export const deleteservicio = async (prevState: ActionState, formData: FormData)
       error: "No se pudo eliminar el servicio",
       success: false
     };
+  }
+};
+
+// Servicios publicados en la web (activos y asignados al menos a un vehículo
+// activo), con su descripción y los vehículos en los que se hacen.
+export const getServiciosAsesoramiento = async () => {
+  try {
+    const servicios = await prisma.servicio.findMany({
+      where: {
+        estado: true,
+        vehiculo_servicio: { some: { estado: true, vehiculo: { estado: true } } },
+      },
+      select: {
+        id: true,
+        nombre: true,
+        srcImage: true,
+        descripcion: true,
+        vehiculo_servicio: {
+          where: { estado: true, vehiculo: { estado: true } },
+          select: { vehiculo: { select: { nombre: true } } },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    return servicios.map((s) => ({
+      id: s.id,
+      nombre: s.nombre ?? "Servicio",
+      srcImage: s.srcImage,
+      descripcion: s.descripcion,
+      vehiculos: [...new Set(s.vehiculo_servicio.map((vs) => vs.vehiculo.nombre).filter(Boolean))] as string[],
+    }));
+  } catch (error) {
+    console.error("Error al obtener servicios para asesoramiento:", error);
+    return null;
   }
 };
 

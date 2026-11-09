@@ -58,8 +58,21 @@ export const SITE_DERIVED_DEFAULTS = {
   MAPA_COORDENADAS: "",
 };
 
+// Opciones de la web que el admin activa o desactiva ("1" = activa, "0" = no).
+// - MOSTRAR_PRECIOS: los clientes ven los precios de los servicios y turnos.
+// - TURNOS_HABILITADOS: los clientes pueden reservar turnos desde la web.
+export const SITE_FLAG_DEFAULTS = {
+  MOSTRAR_PRECIOS: "1",
+  TURNOS_HABILITADOS: "1",
+};
+
+export function opcionActiva(valor: string | undefined | null): boolean {
+  return valor !== "0";
+}
+
 export const SITE_CONFIG_DEFAULTS = {
   ...SITE_TEXT_DEFAULTS,
+  ...SITE_FLAG_DEFAULTS,
   ...SITE_STYLE_DEFAULTS,
   ...SITE_IMAGE_DEFAULTS,
   ...SITE_DERIVED_DEFAULTS,
@@ -72,7 +85,8 @@ export type SiteTextKey = keyof typeof SITE_TEXT_DEFAULTS;
 export type SiteStyleKey = keyof typeof SITE_STYLE_DEFAULTS;
 export type SiteImageKey = keyof typeof SITE_IMAGE_DEFAULTS;
 export type SiteDerivedKey = keyof typeof SITE_DERIVED_DEFAULTS;
-export type SiteConfigKey = SiteTextKey | SiteStyleKey | SiteImageKey | SiteDerivedKey;
+export type SiteFlagKey = keyof typeof SITE_FLAG_DEFAULTS;
+export type SiteConfigKey = SiteTextKey | SiteStyleKey | SiteImageKey | SiteDerivedKey | SiteFlagKey;
 export type SiteConfig = Record<SiteConfigKey, string>;
 
 // Largo máximo de cada texto editable desde Configuración.

@@ -12,6 +12,7 @@ import {
   Palette,
   Settings,
   Sparkles,
+  ToggleRight,
 } from "lucide-react";
 
 export interface ItemNavegacion {
@@ -59,6 +60,7 @@ export const GRUPOS_NAVEGACION: GrupoNavegacion[] = [
         items: [
           { titulo: "Información general", href: "/admin/configuracion/general", icono: Building2 },
           { titulo: "Ubicación y contacto", href: "/admin/configuracion/ubicacion", icono: MapPin },
+          { titulo: "Turnos y precios", href: "/admin/configuracion/turnos", icono: ToggleRight },
           { titulo: "Apariencia", href: "/admin/configuracion/apariencia", icono: Palette },
           { titulo: "Imágenes", href: "/admin/configuracion/imagenes", icono: ImageIcon },
           { titulo: "Feriados y excepciones", href: "/admin/configuracion/feriados", icono: CalendarDays },

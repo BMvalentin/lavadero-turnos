@@ -17,6 +17,7 @@ type Servicio = {
   id: string;
   nombre: string | null;
   srcImage: string | null;
+  descripcion?: string | null;
   estado: boolean;
   createdAt: Date;
   vehiculo_servicio: any[];

@@ -10,6 +10,7 @@ const navegacion = [
   { label: "Servicios", href: "/#servicios" },
   { label: "Nosotros", href: "/#nosotros" },
   { label: "Ubicación", href: "/#ubicacion" },
+  { label: "Asesoramiento", href: "/asesoramiento" },
   { label: "Turnos", href: "/turno" },
 ];
 

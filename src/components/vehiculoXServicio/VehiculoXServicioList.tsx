@@ -6,6 +6,7 @@ import EditVehiculoXServicioModal from "./EditVehiculoXServicioModal";
 import Image from "next/image";
 import { Button } from "../ui/button";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useMostrarPrecios } from "@/components/providers/SiteConfigProvider";
 import { useToast } from "@/hooks/useToast";
 
 const initialState = {
@@ -102,6 +103,8 @@ function VehiculoXServicioCard({ item }: { item: VehiculoXServicio }) {
     }
   };
 
+  const mostrarPrecios = useMostrarPrecios();
+
   const formatPrecio = (precio: number) => {
     return new Intl.NumberFormat("es-AR", {
       style: "currency",
@@ -147,6 +150,8 @@ function VehiculoXServicioCard({ item }: { item: VehiculoXServicio }) {
               <span className="text-sm text-gray-600">Duración:</span>
               <span className="font-semibold">{item.duracion} min</span>
             </div>
+            {mostrarPrecios && (
+            <>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Precio:</span>
               <span className="font-semibold text-green-600">
@@ -178,6 +183,8 @@ function VehiculoXServicioCard({ item }: { item: VehiculoXServicio }) {
                   {formatPrecio(item.precio - item.descuento)}
                 </span>
               </div>
+            )}
+            </>
             )}
           </div>
 
